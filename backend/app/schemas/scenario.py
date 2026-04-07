@@ -122,3 +122,8 @@ class RunFlowResponse(BaseModel):
     steps: list[RunStepResult]
     assertions_passed: int = 0
     assertions_failed: int = 0
+
+
+class AiGenerateRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    env_slug: str = "stage"

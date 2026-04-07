@@ -25,6 +25,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -116,6 +117,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
   const [error, setError] = useState("");
 
   const [showEpPicker, setShowEpPicker] = useState(false);
+  const [showAiDialog, setShowAiDialog] = useState(false);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<RunFlowResponse | null>(null);
   const [resultOpen, setResultOpen] = useState(true);
@@ -332,6 +334,14 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
     : null;
 
   // ---- add node via endpoint picker ----
+  const handleAiGenerated = useCallback(
+    (scenarioId: string) => {
+      loadList().then(() => loadScenario(scenarioId));
+      setShowAiDialog(false);
+    },
+    [loadList, loadScenario],
+  );
+
   const handleAddEndpoint = (ep: EndpointOut) => {
     const id = `node_${Date.now()}`;
     setNodes((prev) => {
@@ -372,6 +382,11 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
       >
         <Stack direction="row" alignItems="center" sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 700 }}>Scenarios</Typography>
+          <Tooltip title="AI 编排">
+            <IconButton size="small" onClick={() => setShowAiDialog(true)} sx={{ color: "#7c3aed" }}>
+              <AutoAwesomeIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <IconButton size="small" onClick={handleCreate} title="New scenario">
             <AddOutlinedIcon sx={{ fontSize: 18 }} />
           </IconButton>
@@ -640,9 +655,22 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Select or create a scenario
               </Typography>
-              <Button variant="contained" startIcon={<AddOutlinedIcon />} onClick={handleCreate}>
-                New Scenario
-              </Button>
+              <Stack direction="row" spacing={1.5} justifyContent="center">
+                <Button variant="contained" startIcon={<AddOutlinedIcon />} onClick={handleCreate}>
+                  New Scenario
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AutoAwesomeIcon />}
+                  onClick={() => setShowAiDialog(true)}
+                  sx={{
+                    bgcolor: "#7c3aed",
+                    "&:hover": { bgcolor: "#6d28d9" },
+                  }}
+                >
+                  AI 编排
+                </Button>
+              </Stack>
             </Box>
           </Box>
         )}
@@ -654,6 +682,14 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
         projectId={projectId}
         onClose={() => setShowEpPicker(false)}
         onSelect={handleAddEndpoint}
+      />
+
+      {/* AI orchestration dialog */}
+      <AiOrchestrationDialog
+        open={showAiDialog}
+        projectId={projectId}
+        onClose={() => setShowAiDialog(false)}
+        onGenerated={handleAiGenerated}
       />
     </Box>
   );
@@ -1384,5 +1420,143 @@ function FolderPickerNode({
         <FolderPickerNode key={child.id} folder={child} onSelect={onSelect} depth={depth + 1} />
       ))}
     </>
+  );
+}
+
+// ---- AI Orchestration dialog ----
+
+const AI_PROMPT_EXAMPLES = [
+  "测试用户注册 → 登录 → 获取个人信息的完整流程，注册使用唯一邮箱",
+  "验证创建项目、更新项目名称、然后删除项目的 CRUD 流程",
+  "测试未登录时访问受保护接口返回 401",
+];
+
+function AiOrchestrationDialog({
+  open,
+  projectId,
+  onClose,
+  onGenerated,
+}: {
+  open: boolean;
+  projectId: string;
+  onClose: () => void;
+  onGenerated: (scenarioId: string) => void;
+}) {
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setPrompt("");
+      setError("");
+      setGenerating(false);
+    }
+  }, [open]);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    setGenerating(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/scenarios/ai-generate`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.detail || `生成失败 (HTTP ${res.status})`);
+      }
+      const data = await res.json();
+      onGenerated(data.id);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "生成失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={generating ? undefined : onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <AutoAwesomeIcon sx={{ color: "#7c3aed" }} />
+        AI 智能编排
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          用自然语言描述你的测试场景，AI 将自动从项目端点库中选择合适的接口，生成完整的测试流程（含参数覆盖、变量提取和断言）。
+          生成后你可以在画布上继续微调。
+        </Typography>
+        <TextField
+          autoFocus
+          fullWidth
+          multiline
+          minRows={3}
+          maxRows={8}
+          placeholder="例如：测试用户注册 → 登录 → 获取个人信息的完整流程"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          disabled={generating}
+          sx={{ mb: 1.5 }}
+          inputProps={{ style: { fontSize: 14 } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !generating && prompt.trim()) {
+              handleGenerate();
+            }
+          }}
+        />
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+          {AI_PROMPT_EXAMPLES.map((ex) => (
+            <Chip
+              key={ex}
+              label={ex}
+              size="small"
+              variant="outlined"
+              onClick={() => !generating && setPrompt(ex)}
+              sx={{
+                fontSize: 11,
+                cursor: "pointer",
+                borderColor: "#d4d4d8",
+                "&:hover": { borderColor: "#7c3aed", color: "#7c3aed" },
+              }}
+            />
+          ))}
+        </Box>
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
+        {generating && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 2, p: 1.5, bgcolor: "#f5f3ff", borderRadius: 1 }}>
+            <CircularProgress size={20} sx={{ color: "#7c3aed" }} />
+            <Typography variant="body2" sx={{ color: "#7c3aed", fontWeight: 600 }}>
+              AI 正在分析端点并编排测试流程…
+            </Typography>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={generating}>
+          取消
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleGenerate}
+          disabled={generating || !prompt.trim()}
+          startIcon={generating ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
+          sx={{
+            bgcolor: "#7c3aed",
+            "&:hover": { bgcolor: "#6d28d9" },
+            textTransform: "none",
+            fontWeight: 700,
+          }}
+        >
+          {generating ? "生成中…" : "生成场景"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

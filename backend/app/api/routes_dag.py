@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db
 from app.db.models import ApiEndpoint, Environment, EnvironmentEnum, ProjectMember, ProjectVariable, Scenario, User
 from app.schemas.scenario import (
+    AiGenerateRequest,
     AssertionResult,
     RunFlowResponse,
     RunStepResult,
@@ -534,3 +535,34 @@ def run_scenario(
         assertions_passed=total_a_passed,
         assertions_failed=total_a_failed,
     )
+
+
+# ---- AI-driven generation ----
+
+@router.post("/{project_id}/scenarios/ai-generate", response_model=ScenarioOut, status_code=201)
+async def ai_generate_scenario(
+    project_id: str,
+    body: AiGenerateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Use LLM to generate a complete scenario from a natural-language prompt."""
+    _check_project_access(db, project_id, current_user)
+
+    from app.services.ai_orchestration import ai_generate_scenario as _ai_gen
+
+    try:
+        result = await _ai_gen(db, project_id, body.prompt)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+    s = Scenario(
+        project_id=project_id,
+        name=result["name"],
+        nodes_json=json.dumps(result["nodes"], ensure_ascii=False),
+        edges_json=json.dumps(result["edges"], ensure_ascii=False),
+    )
+    db.add(s)
+    db.commit()
+    db.refresh(s)
+    return _scenario_to_out(s)
