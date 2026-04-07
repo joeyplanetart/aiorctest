@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  # --- Phase 1: only backend + frontend ---
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./backend/chroma_data:/app/chroma_data
+
+  # --- Future services (uncomment when needed) ---
+  # postgres:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_USER: aiorctest
+  #     POSTGRES_PASSWORD: changeme
+  #     POSTGRES_DB: aiorctest
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+
+  # celery-worker:
+  #   build: ./backend
+  #   command: celery -A app.celery_app worker --loglevel=info
+  #   env_file: .env
+  #   depends_on:
+  #     - redis
+  #     - postgres
+
+# volumes:
+#   pgdata:
