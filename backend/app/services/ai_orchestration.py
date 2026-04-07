@@ -59,6 +59,21 @@ if the original values need modification
 - Downstream steps reference them via `{{{{var_name}}}}` \
 in any override field or assertion expected value.
 
+## Authentication pattern (CRITICAL)
+Most APIs require authentication. Follow this pattern:
+1. If the flow includes a login/auth endpoint, extract the \
+token from its response (e.g. `$.access_token` or `$.token`).
+2. For ALL subsequent steps after login, you MUST add an \
+Authorization header override:
+   `"headers": {{"Authorization": "Bearer {{{{token}}}}"}}`
+   where `token` is the variable name from the extract rule.
+3. Even if the endpoint catalog already shows headers, you \
+must still override the Authorization header with the \
+extracted token variable so it uses the dynamic value.
+4. If there is no login step in the flow but the endpoints \
+clearly require auth (protected routes), add a note in the \
+scenario name or first step label indicating auth is needed.
+
 ## Output format
 Return **only** a JSON object (no markdown fences):
 {{
@@ -101,6 +116,8 @@ Rules:
 - Use {{{{_run_uuid}}}} for unique data.
 - Set body_type to "json" when overriding body.
 - Set unused override fields to null.
+- After a login/auth step, ALWAYS add Authorization header \
+to every subsequent step.
 - Respond with ONLY the JSON object, no extra text.\
 """
 
@@ -141,12 +158,25 @@ def _build_endpoint_catalog(
             else ep.method
         )
         desc = ep.description or ""
+
+        hdrs_preview = ""
+        if ep.headers_json and ep.headers_json.strip():
+            try:
+                hdrs = json.loads(ep.headers_json)
+                if hdrs:
+                    hdrs_preview = json.dumps(
+                        hdrs, ensure_ascii=False,
+                    )
+            except json.JSONDecodeError:
+                pass
+
         lines.append(
             f"- id: {ep.id}\n"
             f"  folder: {folder_name}\n"
             f"  name: {ep.name}\n"
             f"  method: {method}\n"
             f"  url: {ep.url}\n"
+            f"  headers: {hdrs_preview or '(none)'}\n"
             f"  body_type: {ep.body_type}\n"
             f"  body: {body_preview}\n"
             f"  description: {desc}"
