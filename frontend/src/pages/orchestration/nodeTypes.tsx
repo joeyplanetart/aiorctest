@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { NodeData } from "@/types/dag";
 import { METHOD_COLORS } from "@/types/api";
@@ -17,6 +18,7 @@ const handleStyle = {
 };
 
 const ApiStepNode = memo(({ data }: NodeProps) => {
+  const { t } = useTranslation();
   const d = data as unknown as NodeData;
   const method = d.method || "GET";
   const color = METHOD_COLORS[method] || "#6b7280";
@@ -56,7 +58,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
         type="target"
         position={Position.Top}
         style={{ ...handleStyle, borderColor, top: -Math.round(8 * S) }}
-        title="Drag here from another step's bottom to connect"
+        title={t("orch.handleDragTarget")}
       />
       {/* ---- Header row: method badge + label + status icon ---- */}
       <div style={{ display: "flex", alignItems: "center", gap: Math.round(6 * S), marginBottom: 2 }}>
@@ -87,7 +89,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
             whiteSpace: "nowrap",
           }}
         >
-          {d.label || d.name || "Untitled"}
+          {d.label || d.name || t("orch.untitled")}
         </span>
         {runStatus === "success" && (
           <span style={{ color: "#16a34a", fontSize: Math.round(16 * S), lineHeight: 1, flexShrink: 0 }}>&#10003;</span>
@@ -152,7 +154,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
                 color: "#2563eb",
               }}
             >
-              {extractCount} extract{extractCount > 1 ? "s" : ""}
+              {extractCount} {extractCount > 1 ? t("orch.extractPlural") : t("orch.extractSingular")}
             </span>
           )}
           {hasOverrides && (
@@ -166,7 +168,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
                 color: "#d97706",
               }}
             >
-              overrides
+              {t("orch.overrides")}
             </span>
           )}
           {hasAssertions && !hasAssertionResults && (
@@ -180,7 +182,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
                 color: "#7c3aed",
               }}
             >
-              {assertionCount} assert{assertionCount > 1 ? "s" : ""}
+              {assertionCount} {assertionCount > 1 ? t("orch.assertPlural") : t("orch.assertSingular")}
             </span>
           )}
           {hasAssertionResults && (
@@ -203,7 +205,7 @@ const ApiStepNode = memo(({ data }: NodeProps) => {
         type="source"
         position={Position.Bottom}
         style={{ ...handleStyle, borderColor, bottom: -Math.round(8 * S) }}
-        title="Drag from here to another step's top to connect"
+        title={t("orch.handleDragSource")}
       />
     </div>
   );

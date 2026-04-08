@@ -19,6 +19,8 @@ import {
   ListItemText,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Toolbar,
   Tooltip,
   Typography,
@@ -35,34 +37,37 @@ import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useLogout, useGetIdentity } from "@refinedev/core";
 import { Link, useLocation, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { getToken } from "@/providers/authProvider";
 import { getLastProject } from "@/lib/lastProject";
+import { setAppLanguage } from "@/i18n";
 import type { ProjectListItem, UserProfile } from "@/types/auth";
 
 const DRAWER_WIDTH = 268;
 const DRAWER_COLLAPSED_WIDTH = 64;
 
 const baseNavItems = [
-  { to: "/projects", label: "Project management", icon: DashboardOutlinedIcon },
-  { to: "/projects", label: "API management", icon: ApiOutlinedIcon, matchPrefix: "/apis" },
-  { to: "/projects", label: "Orchestration", icon: AccountTreeOutlinedIcon, matchPrefix: "/orchestration" },
-  { to: "/llm-admin", label: "LLM Management", icon: AutoAwesomeOutlinedIcon },
+  { to: "/projects", labelKey: "layout.navProjects", icon: DashboardOutlinedIcon },
+  { to: "/projects", labelKey: "layout.navApis", icon: ApiOutlinedIcon, matchPrefix: "/apis" },
+  { to: "/projects", labelKey: "layout.navOrch", icon: AccountTreeOutlinedIcon, matchPrefix: "/orchestration" },
+  { to: "/llm-admin", labelKey: "layout.navLlm", icon: AutoAwesomeOutlinedIcon },
 ] as const;
 
 const adminNavItem = {
   to: "/admin",
-  label: "Platform admin",
+  labelKey: "layout.navAdmin",
   icon: AdminPanelSettingsOutlinedIcon,
 } as const;
 
 export function AppLayout({ children }: { children: ReactNode }) {
+  const { t, i18n } = useTranslation();
   const { mutate: logout } = useLogout();
   const { data: identity } = useGetIdentity<UserProfile>();
   const location = useLocation();
   const navigate = useNavigate();
 
   const display =
-    identity?.display_name || identity?.email?.split("@")[0] || "User";
+    identity?.display_name || identity?.email?.split("@")[0] || t("common.user");
   const initial = display.charAt(0).toUpperCase();
   const [isProjectAdminOnAny, setIsProjectAdminOnAny] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
@@ -90,9 +95,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
     };
   }, [identity?.id]);
 
-  const navItems = identity?.is_superadmin
+  const navItems: readonly (
+    | (typeof baseNavItems)[number]
+    | typeof adminNavItem
+  )[] = identity?.is_superadmin
     ? [...baseNavItems, adminNavItem]
     : [...baseNavItems];
+
+  const langValue = i18n.language.startsWith("zh") ? "zh" : "en";
 
   const drawerWidth = collapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -189,7 +199,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Box>
           )}
           {!collapsed && (
-            <Tooltip title="Collapse menu" placement="right">
+            <Tooltip title={t("layout.collapseMenu")} placement="right">
               <IconButton size="small" onClick={toggleCollapsed} sx={{ ml: 1, flexShrink: 0 }}>
                 <MenuOpenIcon fontSize="small" />
               </IconButton>
@@ -200,7 +210,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Expand button when collapsed */}
         {collapsed && (
           <Box sx={{ display: "flex", justifyContent: "center", pb: 1 }}>
-            <Tooltip title="Expand menu" placement="right">
+            <Tooltip title={t("layout.expandMenu")} placement="right">
               <IconButton size="small" onClick={toggleCollapsed}>
                 <MenuIcon fontSize="small" />
               </IconButton>
@@ -212,7 +222,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {!collapsed && (
           <>
             <Box sx={{ px: 2, pb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Tooltip title="Edit profile" placement="right">
+              <Tooltip title={t("layout.editProfile")} placement="right">
                 <Avatar
                   src={identity?.avatar_url || undefined}
                   onClick={() => setProfileOpen(true)}
@@ -232,11 +242,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     {display}
                   </Typography>
                   {identity?.is_superadmin && (
-                    <Chip label="Superadmin" size="small" color="primary" sx={{ height: 22, fontSize: 11 }} />
+                    <Chip label={t("layout.superadmin")} size="small" color="primary" sx={{ height: 22, fontSize: 11 }} />
                   )}
                   {isProjectAdminOnAny && (
                     <Chip
-                      label="Project admin"
+                      label={t("layout.projectAdmin")}
                       size="small"
                       color="secondary"
                       variant="outlined"
@@ -257,7 +267,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {collapsed && (
           <>
             <Box sx={{ display: "flex", justifyContent: "center", pb: 1.5 }}>
-              <Tooltip title={`${display} — Edit profile`} placement="right">
+              <Tooltip title={t("layout.editProfileCollapsed", { name: display })} placement="right">
                 <Avatar
                   src={identity?.avatar_url || undefined}
                   onClick={() => setProfileOpen(true)}
@@ -279,7 +289,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Nav items */}
         <List sx={{ px: collapsed ? 0.75 : 1.5, py: 1.5, flex: 1 }}>
           {navItems.map((item) => {
-            const { to, label, icon: Icon } = item;
+            const { to, labelKey, icon: Icon } = item;
+            const label = t(labelKey);
             const matchPrefix = "matchPrefix" in item ? (item as any).matchPrefix : undefined;
             const isOnApisPage = !!location.pathname.match(/^\/projects\/[^/]+\/apis/);
             const isOnOrchPage = !!location.pathname.match(/^\/projects\/[^/]+\/orchestration/);
@@ -313,7 +324,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
             const btn = (
               <ListItemButton
-                key={label}
+                key={labelKey}
                 component={Link}
                 to={linkTo}
                 onClick={handleClick}
@@ -352,19 +363,63 @@ export function AppLayout({ children }: { children: ReactNode }) {
             );
 
             return collapsed ? (
-              <Tooltip key={label} title={label} placement="right">
+              <Tooltip key={labelKey} title={label} placement="right">
                 <span>{btn}</span>
               </Tooltip>
             ) : (
-              <span key={label}>{btn}</span>
+              <span key={labelKey}>{btn}</span>
             );
           })}
         </List>
 
+        {/* Language */}
+        <Box
+          sx={{
+            px: collapsed ? 0.75 : 2,
+            pb: 1,
+            display: "flex",
+            justifyContent: "center",
+            flexDirection: "column",
+            alignItems: "stretch",
+            gap: 0.5,
+          }}
+        >
+          {!collapsed && (
+            <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, fontWeight: 600 }}>
+              {t("layout.language")}
+            </Typography>
+          )}
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={langValue}
+            orientation={collapsed ? "vertical" : "horizontal"}
+            onChange={(_, v) => {
+              if (v === "en" || v === "zh") setAppLanguage(v);
+            }}
+            sx={{
+              width: collapsed ? "100%" : "auto",
+              "& .MuiToggleButton-root": {
+                px: collapsed ? 0.5 : 1.25,
+                py: 0.25,
+                fontSize: collapsed ? 10 : 12,
+                fontWeight: 700,
+              },
+            }}
+          >
+            <ToggleButton value="en" aria-label="English">
+              {t("layout.langEn")}
+            </ToggleButton>
+            <ToggleButton value="zh" aria-label="中文">
+              {t("layout.langZh")}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
         {/* Sign out */}
-        <Box sx={{ p: collapsed ? 1 : 2, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ p: collapsed ? 1 : 2, pt: collapsed ? 0 : 1, display: "flex", justifyContent: "center" }}>
           {collapsed ? (
-            <Tooltip title="Sign out" placement="right">
+            <Tooltip title={t("layout.signOut")} placement="right">
               <IconButton
                 onClick={() => logout()}
                 sx={{ color: "text.secondary" }}
@@ -384,7 +439,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 color: "text.secondary",
               }}
             >
-              Sign out
+              {t("layout.signOut")}
             </Button>
           )}
         </Box>
@@ -424,6 +479,7 @@ function ProfileDialog({
   onClose: () => void;
   identity: UserProfile | null;
 }) {
+  const { t } = useTranslation();
   const { refetch } = useGetIdentity<UserProfile>();
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -458,11 +514,11 @@ function ProfileDialog({
       body: JSON.stringify({ display_name: displayName, avatar_url: avatarUrl || null }),
     });
     if (res.ok) {
-      setMsg("Profile updated");
+      setMsg(t("layoutProfile.updated"));
       refetch();
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Update failed");
+      setError(d.detail || t("layoutProfile.updateFailed"));
     }
   };
 
@@ -476,12 +532,12 @@ function ProfileDialog({
       body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
     });
     if (res.ok || res.status === 204) {
-      setMsg("Password changed");
+      setMsg(t("layoutProfile.passwordChanged"));
       setOldPassword("");
       setNewPassword("");
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Password change failed");
+      setError(d.detail || t("layoutProfile.passwordChangeFailed"));
     }
   };
 
@@ -514,25 +570,25 @@ function ProfileDialog({
         <Card variant="outlined" sx={{ mb: 2 }}>
           <CardContent component="form" onSubmit={handleProfileSave} sx={{ pb: "16px !important" }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              Profile
+              {t("common.profile")}
             </Typography>
             <Stack spacing={1.5}>
               <TextField
-                label="Email"
+                label={t("common.email")}
                 value={identity?.email || ""}
                 disabled
                 fullWidth
                 size="small"
               />
               <TextField
-                label="Display Name"
+                label={t("common.displayName")}
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 fullWidth
                 size="small"
               />
               <TextField
-                label="Avatar URL"
+                label={t("common.avatarUrl")}
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
                 fullWidth
@@ -540,7 +596,7 @@ function ProfileDialog({
                 placeholder="https://…"
               />
               <Button type="submit" variant="contained" size="small" sx={{ alignSelf: "flex-start" }}>
-                Save changes
+                {t("common.saveChanges")}
               </Button>
             </Stack>
           </CardContent>
@@ -549,11 +605,11 @@ function ProfileDialog({
         <Card variant="outlined">
           <CardContent component="form" onSubmit={handlePasswordChange} sx={{ pb: "16px !important" }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              Change password
+              {t("common.changePassword")}
             </Typography>
             <Stack spacing={1.5}>
               <TextField
-                label="Current password"
+                label={t("common.currentPassword")}
                 type="password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
@@ -562,7 +618,7 @@ function ProfileDialog({
                 size="small"
               />
               <TextField
-                label="New password"
+                label={t("common.newPassword")}
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -572,7 +628,7 @@ function ProfileDialog({
                 inputProps={{ minLength: 6 }}
               />
               <Button type="submit" variant="contained" color="secondary" size="small" sx={{ alignSelf: "flex-start" }}>
-                Update password
+                {t("common.updatePassword")}
               </Button>
             </Stack>
           </CardContent>

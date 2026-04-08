@@ -6,17 +6,24 @@ import {
   Link as MuiLink,
   Paper,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import { useRegister } from "@refinedev/core";
+import { useTranslation } from "react-i18next";
+import { setAppLanguage } from "@/i18n";
 
 export function RegisterPage() {
+  const { t, i18n } = useTranslation();
   const { mutate: register, isLoading } = useRegister();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
+
+  const langValue = i18n.language.startsWith("zh") ? "zh" : "en";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +31,7 @@ export function RegisterPage() {
     register(
       { email, password, displayName },
       {
-        onError: (err) => setError(err.message || "Registration failed"),
+        onError: (err) => setError(err.message || t("auth.registrationFailed")),
       },
     );
   };
@@ -38,8 +45,22 @@ export function RegisterPage() {
         justifyContent: "center",
         bgcolor: "background.default",
         p: 2,
+        position: "relative",
       }}
     >
+      <Box sx={{ position: "absolute", top: 16, right: 16 }}>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={langValue}
+          onChange={(_, v) => {
+            if (v === "en" || v === "zh") setAppLanguage(v);
+          }}
+        >
+          <ToggleButton value="en">{t("layout.langEn")}</ToggleButton>
+          <ToggleButton value="zh">{t("layout.langZh")}</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -55,7 +76,7 @@ export function RegisterPage() {
           AIOrcTest
         </Typography>
         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-          Create your account
+          {t("auth.createAccountTitle")}
         </Typography>
 
         {error && (
@@ -65,25 +86,25 @@ export function RegisterPage() {
         )}
 
         <TextField
-          label="Display name"
+          label={t("common.displayName")}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           fullWidth
           margin="normal"
-          placeholder="Your name"
+          placeholder={t("auth.yourName")}
         />
         <TextField
-          label="Email"
+          label={t("common.email")}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           fullWidth
           margin="normal"
-          placeholder="you@example.com"
+          placeholder={t("auth.emailPlaceholder")}
         />
         <TextField
-          label="Password"
+          label={t("common.password")}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -91,7 +112,7 @@ export function RegisterPage() {
           fullWidth
           margin="normal"
           inputProps={{ minLength: 6 }}
-          placeholder="At least 6 characters"
+          placeholder={t("auth.passwordMin")}
         />
 
         <Button
@@ -103,13 +124,13 @@ export function RegisterPage() {
           disabled={isLoading}
           sx={{ mt: 3 }}
         >
-          {isLoading ? "Creating…" : "Create account"}
+          {isLoading ? t("auth.creating") : t("auth.createAccount")}
         </Button>
 
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          Already have an account?{" "}
+          {t("auth.hasAccount")}{" "}
           <MuiLink component={RouterLink} to="/login" fontWeight={600} underline="hover">
-            Sign in
+            {t("auth.signInLink")}
           </MuiLink>
         </Typography>
       </Paper>

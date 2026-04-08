@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useGetIdentity } from "@refinedev/core";
+import { Trans, useTranslation } from "react-i18next";
 import { getToken } from "@/providers/authProvider";
 import type { UserAdminRow, UserProfile } from "@/types/auth";
 
@@ -28,6 +29,7 @@ function headers(): Record<string, string> {
 }
 
 export function AdminPage() {
+  const { t } = useTranslation();
   const { data: identity, refetch: refetchIdentity } = useGetIdentity<UserProfile>();
   const [users, setUsers] = useState<UserAdminRow[]>([]);
   const [error, setError] = useState("");
@@ -38,14 +40,14 @@ export function AdminPage() {
     const res = await fetch(API, { headers: headers() });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      setError(typeof d.detail === "string" ? d.detail : "Failed to load users");
+      setError(typeof d.detail === "string" ? d.detail : t("admin.loadFailed"));
       setUsers([]);
       setLoading(false);
       return;
     }
     setUsers(await res.json());
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -60,7 +62,7 @@ export function AdminPage() {
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      setError(typeof d.detail === "string" ? d.detail : "Update failed");
+      setError(typeof d.detail === "string" ? d.detail : t("admin.updateFailed"));
       return;
     }
     await load();
@@ -72,7 +74,7 @@ export function AdminPage() {
   if (!identity?.is_superadmin) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="warning">Superadmin access required.</Alert>
+        <Alert severity="warning">{t("admin.accessRequired")}</Alert>
       </Box>
     );
   }
@@ -80,12 +82,10 @@ export function AdminPage() {
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
       <Typography variant="h4" sx={{ mb: 1 }}>
-        Platform admin
+        {t("admin.title")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Global users, superadmin flags, and account activation. For projects, environments, and project-level
-        members, use <strong>Project management</strong>. Project admins manage those within each project;
-        superadmins can create or delete projects.
+        <Trans i18nKey="admin.intro" components={{ 0: <strong /> }} />
       </Typography>
 
       {error && (
@@ -97,19 +97,19 @@ export function AdminPage() {
       <Card>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Users
+            {t("admin.users")}
           </Typography>
           {loading ? (
-            <Typography color="text.secondary">Loading…</Typography>
+            <Typography color="text.secondary">{t("common.loading")}</Typography>
           ) : (
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Display name</TableCell>
-                  <TableCell align="center">Superadmin</TableCell>
-                  <TableCell align="center">Active</TableCell>
-                  <TableCell>Created</TableCell>
+                  <TableCell>{t("admin.tableEmail")}</TableCell>
+                  <TableCell>{t("admin.tableDisplayName")}</TableCell>
+                  <TableCell align="center">{t("admin.tableSuperadmin")}</TableCell>
+                  <TableCell align="center">{t("admin.tableActive")}</TableCell>
+                  <TableCell>{t("admin.tableCreated")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -118,7 +118,7 @@ export function AdminPage() {
                     <TableCell>
                       {u.email}
                       {u.id === identity.id && (
-                        <Chip label="You" size="small" sx={{ ml: 1 }} color="primary" variant="outlined" />
+                        <Chip label={t("common.you")} size="small" sx={{ ml: 1 }} color="primary" variant="outlined" />
                       )}
                     </TableCell>
                     <TableCell>{u.display_name}</TableCell>

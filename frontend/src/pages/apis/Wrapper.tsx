@@ -9,12 +9,15 @@ import {
   Chip,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import { useTranslation } from "react-i18next";
 import { ApisPage } from "./index";
 import { getToken } from "@/providers/authProvider";
 import { setLastProject } from "@/lib/lastProject";
+import { formatProjectRole } from "@/lib/roles";
 import type { ProjectListItem } from "@/types/auth";
 
 export function ApisPageWrapper() {
+  const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
@@ -44,7 +47,7 @@ export function ApisPageWrapper() {
   if (!projectId) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="error">Project ID is required</Typography>
+        <Typography color="error">{t("wrappers.projectRequired")}</Typography>
       </Box>
     );
   }
@@ -65,7 +68,7 @@ export function ApisPageWrapper() {
         }}
       >
         <Typography variant="subtitle2" sx={{ color: "text.secondary", fontSize: 13 }}>
-          Project:
+          {t("wrappers.projectLabel")}
         </Typography>
         <Select
           value={projectId}
@@ -85,7 +88,7 @@ export function ApisPageWrapper() {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <span>{p.name}</span>
                 <Chip
-                  label={p.role}
+                  label={formatProjectRole(p.role)}
                   size="small"
                   sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
                   color={p.role === "admin" ? "primary" : "default"}
@@ -97,7 +100,7 @@ export function ApisPageWrapper() {
         </Select>
         {currentName && (
           <Typography variant="body2" sx={{ color: "text.disabled", ml: "auto", fontSize: 12 }}>
-            API Management
+            {t("wrappers.apiManagement")}
           </Typography>
         )}
       </Box>

@@ -12,9 +12,12 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { getToken } from "@/providers/authProvider";
 import { setLastProject } from "@/lib/lastProject";
 import type { ProjectListItem } from "@/types/auth";
+import { useTranslation } from "react-i18next";
+import { formatProjectRole } from "@/lib/roles";
 import { OrchestrationPage } from "./index";
 
 export function OrchestrationPageWrapper() {
+  const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
@@ -40,7 +43,7 @@ export function OrchestrationPageWrapper() {
   if (!projectId) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography color="error">Project ID is required</Typography>
+        <Typography color="error">{t("wrappers.projectRequired")}</Typography>
       </Box>
     );
   }
@@ -61,7 +64,7 @@ export function OrchestrationPageWrapper() {
         }}
       >
         <Typography variant="subtitle2" sx={{ color: "text.secondary", fontSize: 13 }}>
-          Project:
+          {t("wrappers.projectLabel")}
         </Typography>
         <Select
           value={projectId}
@@ -81,7 +84,7 @@ export function OrchestrationPageWrapper() {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <span>{p.name}</span>
                 <Chip
-                  label={p.role}
+                  label={formatProjectRole(p.role)}
                   size="small"
                   sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
                   color={p.role === "admin" ? "primary" : "default"}
@@ -92,7 +95,7 @@ export function OrchestrationPageWrapper() {
           ))}
         </Select>
         <Typography variant="body2" sx={{ color: "text.disabled", ml: "auto", fontSize: 12 }}>
-          Orchestration
+          {t("wrappers.orchestration")}
         </Typography>
       </Box>
       <Box sx={{ flex: 1, overflow: "hidden" }}>

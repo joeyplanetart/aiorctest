@@ -26,6 +26,7 @@ import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import { alpha } from "@mui/material/styles";
 import { useGetIdentity } from "@refinedev/core";
 import { useNavigate } from "react-router";
+import { Trans, useTranslation } from "react-i18next";
 import { getToken } from "@/providers/authProvider";
 import { getLastProject } from "@/lib/lastProject";
 import type { UserProfile, ProjectListItem, ProjectOut, MemberOut, EnvironmentOut } from "@/types/auth";
@@ -44,6 +45,7 @@ function headers(): Record<string, string> {
 type EnvEdit = { label: string; base_url: string };
 
 export function ProjectsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: identity } = useGetIdentity<UserProfile>();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
@@ -108,7 +110,7 @@ export function ProjectsPage() {
       loadProjects();
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Create failed");
+      setError(d.detail || t("projects.createFailed"));
     }
   };
 
@@ -118,7 +120,6 @@ export function ProjectsPage() {
     setError("");
     setAddMemberResults([]);
 
-    // Support multiple emails separated by ";" or ","
     const emails = memberEmail
       .split(/[;,]/)
       .map((s) => s.trim().toLowerCase())
@@ -136,10 +137,10 @@ export function ProjectsPage() {
         body: JSON.stringify({ email, role: memberRole }),
       });
       if (res.ok) {
-        results.push({ email, ok: true, msg: "Added" });
+        results.push({ email, ok: true, msg: t("projects.added") });
       } else {
         const d = await res.json().catch(() => ({}));
-        results.push({ email, ok: false, msg: d.detail || "Failed" });
+        results.push({ email, ok: false, msg: d.detail || t("projects.failed") });
       }
     }
 
@@ -172,7 +173,7 @@ export function ProjectsPage() {
     if (res.ok) loadProject(selected.id);
     else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Role update failed");
+      setError(d.detail || t("projects.roleUpdateFailed"));
     }
   };
 
@@ -196,7 +197,7 @@ export function ProjectsPage() {
         });
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.detail || "Environment update failed");
+          throw new Error(d.detail || t("projects.environmentUpdateFailed"));
         }
       }
       await loadProject(selected.id);
@@ -221,18 +222,13 @@ export function ProjectsPage() {
       loadProject(selected.id);
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Update failed");
+      setError(d.detail || t("projects.updateFailed"));
     }
   };
 
   const handleDeleteProject = async () => {
     if (!selected || !isSuperadmin) return;
-    if (
-      !window.confirm(
-        `Delete project "${selected.name}"? This cannot be undone.`,
-      )
-    )
-      return;
+    if (!window.confirm(t("projects.deleteConfirm", { name: selected.name }))) return;
     setError("");
     const res = await fetch(`${API}/${selected.id}`, { method: "DELETE", headers: headers() });
     if (res.ok) {
@@ -240,7 +236,7 @@ export function ProjectsPage() {
       loadProjects();
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Delete failed");
+      setError(d.detail || t("projects.deleteFailed"));
     }
   };
 
@@ -252,10 +248,12 @@ export function ProjectsPage() {
     <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Box>
-          <Typography variant="h4">Project management</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }}>
-            <strong>Superadmins</strong> create and delete projects. <strong>Project admins</strong> edit project
-            details, environments, and members for that project. <strong>Members</strong> can view only.
+          <Typography variant="h4">{t("projects.title")}</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }} component="div">
+            <Trans
+              i18nKey="projects.intro"
+              components={[<strong key="a" />, <strong key="b" />, <strong key="c" />]}
+            />
           </Typography>
         </Box>
         {isSuperadmin && (
@@ -264,71 +262,73 @@ export function ProjectsPage() {
             startIcon={<AddOutlinedIcon />}
             onClick={() => setShowCreate(!showCreate)}
           >
-            New project
+            {t("projects.newProject")}
           </Button>
         )}
       </Stack>
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        Your sidebar shows <strong>Superadmin</strong> (platform) and/or <strong>Project admin</strong> (at least one
-        project with the admin role). Project-level roles are managed in the members table below.
+        <Trans
+          i18nKey="projects.sidebarHint"
+          components={[<strong key="a" />, <strong key="b" />]}
+        />
       </Alert>
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 3 }}>
         <Card
           sx={{
             flex: 1,
-            bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
+            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
             border: "none",
           }}
         >
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Projects
+              {t("common.projects")}
             </Typography>
             <Typography variant="h3" fontWeight={800} color="primary.dark">
               {projects.length}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Total workspaces
+              {t("projects.totalWorkspaces")}
             </Typography>
           </CardContent>
         </Card>
         <Card
           sx={{
             flex: 1,
-            bgcolor: (t) => alpha("#e8a87c", 0.25),
+            bgcolor: (theme) => alpha("#e8a87c", 0.25),
             border: "none",
           }}
         >
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Members
+              {t("common.members")}
             </Typography>
             <Typography variant="h3" fontWeight={800} sx={{ color: "#b45309" }}>
               {selected?.members?.length ?? "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {selected ? "In selected project" : "Select a project"}
+              {selected ? t("projects.inSelectedProject") : t("projects.selectProject")}
             </Typography>
           </CardContent>
         </Card>
         <Card
           sx={{
             flex: 1,
-            bgcolor: (t) => alpha(t.palette.info.main, 0.06),
+            bgcolor: (theme) => alpha(theme.palette.info.main, 0.06),
             border: "none",
           }}
         >
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Environments
+              {t("common.environments")}
             </Typography>
             <Typography variant="h3" fontWeight={800} color="text.primary">
               {selected ? envCount : "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Configured targets
+              {t("projects.configuredTargets")}
             </Typography>
           </CardContent>
         </Card>
@@ -344,11 +344,11 @@ export function ProjectsPage() {
         <Card sx={{ mb: 3 }}>
           <CardContent component="form" onSubmit={handleCreate}>
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Create project
+              {t("projects.createProject")}
             </Typography>
             <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
               <TextField
-                label="Name"
+                label={t("common.name")}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 required
@@ -356,7 +356,7 @@ export function ProjectsPage() {
                 size="small"
               />
               <TextField
-                label="Description"
+                label={t("common.description")}
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
                 fullWidth
@@ -365,10 +365,10 @@ export function ProjectsPage() {
             </Stack>
             <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
               <Button type="submit" variant="contained">
-                Create
+                {t("common.create")}
               </Button>
               <Button type="button" variant="outlined" color="inherit" onClick={() => setShowCreate(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </Stack>
           </CardContent>
@@ -379,7 +379,7 @@ export function ProjectsPage() {
         <Card sx={{ width: { xs: "100%", lg: 280 }, flexShrink: 0 }}>
           <CardContent sx={{ pb: 1 }}>
             <Typography variant="subtitle2" color="text.secondary" fontWeight={700} gutterBottom>
-              Your projects
+              {t("projects.yourProjects")}
             </Typography>
             <Stack spacing={1}>
               {projects.map((p) => {
@@ -401,12 +401,12 @@ export function ProjectsPage() {
                       border: "1.5px solid",
                       borderColor: isSelected ? "primary.main" : "divider",
                       bgcolor: isSelected
-                        ? (t) => alpha(t.palette.primary.main, 0.08)
+                        ? (theme) => alpha(theme.palette.primary.main, 0.08)
                         : "background.paper",
                       transition: "all 0.15s",
                       "&:hover": {
                         borderColor: "primary.main",
-                        bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
                       },
                     }}
                   >
@@ -422,7 +422,7 @@ export function ProjectsPage() {
                       {isLast && (
                         <Chip
                           icon={<HistoryIcon sx={{ fontSize: "14px !important" }} />}
-                          label="Last visited"
+                          label={t("projects.lastVisited")}
                           size="small"
                           color="info"
                           variant="outlined"
@@ -431,16 +431,14 @@ export function ProjectsPage() {
                       )}
                     </Stack>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
-                      Role: {formatProjectRole(p.role)}
+                      {t("projects.rolePrefix")} {formatProjectRole(p.role)}
                     </Typography>
                   </Box>
                 );
               })}
               {projects.length === 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                  {isSuperadmin
-                    ? "No projects yet. Use “New project” to create one."
-                    : "No projects yet. Ask a superadmin to add you or create a project."}
+                  {isSuperadmin ? t("projects.emptySuperadmin") : t("projects.emptyMember")}
                 </Typography>
               )}
             </Stack>
@@ -470,7 +468,7 @@ export function ProjectsPage() {
                       startIcon={<ApiOutlinedIcon />}
                       onClick={() => navigate(`/projects/${selected.id}/apis`)}
                     >
-                      API Management
+                      {t("projects.apiManagement")}
                     </Button>
                     <Button
                       variant="outlined"
@@ -478,11 +476,11 @@ export function ProjectsPage() {
                       startIcon={<AccountTreeOutlinedIcon />}
                       onClick={() => navigate(`/projects/${selected.id}/orchestration`)}
                     >
-                      Orchestration
+                      {t("projects.orchestration")}
                     </Button>
                     {isSuperadmin && (
                       <Button color="error" variant="outlined" size="small" onClick={handleDeleteProject}>
-                        Delete project
+                        {t("projects.deleteProject")}
                       </Button>
                     )}
                   </Stack>
@@ -491,11 +489,11 @@ export function ProjectsPage() {
                 {canManageProject && (
                   <Box component="form" onSubmit={handleUpdateProjectMeta} sx={{ mb: 3 }}>
                     <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                      Project details
+                      {t("projects.projectDetails")}
                     </Typography>
                     <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
                       <TextField
-                        label="Name"
+                        label={t("common.name")}
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         required
@@ -503,7 +501,7 @@ export function ProjectsPage() {
                         fullWidth
                       />
                       <TextField
-                        label="Description"
+                        label={t("common.description")}
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         size="small"
@@ -511,23 +509,22 @@ export function ProjectsPage() {
                       />
                     </Stack>
                     <Button type="submit" variant="outlined" size="small" sx={{ mt: 1 }}>
-                      Save project details
+                      {t("projects.saveProjectDetails")}
                     </Button>
                   </Box>
                 )}
 
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 2, mb: 1 }}>
-                  Environments (stage / pre / prod)
+                  {t("projects.envSectionTitle")}
                 </Typography>
                 {selected && projectRole && (
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-                    Your role in this project: <strong>{formatProjectRole(projectRole)}</strong>
+                    {t("projects.yourRoleInProject")}{" "}
+                    <strong>{formatProjectRole(projectRole)}</strong>
                   </Typography>
                 )}
                 <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                  {canManageProject
-                    ? "Set a base URL per environment (e.g. https://api.example.com)."
-                    : "Only superadmins and project admins can edit environment URLs."}
+                  {canManageProject ? t("projects.envHintManage") : t("projects.envHintView")}
                 </Typography>
                 <Stack spacing={2} sx={{ mb: 2 }}>
                   {selected.environments.map((env: EnvironmentOut) => {
@@ -536,7 +533,7 @@ export function ProjectsPage() {
                     return (
                       <Stack key={env.id} direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "flex-start" }}>
                         <TextField
-                          label="Label"
+                          label={t("common.label")}
                           value={ed.label}
                           onChange={(e) =>
                             setEnvEdits((prev) => ({
@@ -549,7 +546,7 @@ export function ProjectsPage() {
                           sx={{ minWidth: 180 }}
                         />
                         <TextField
-                          label={`Base URL (${env.slug})`}
+                          label={t("projects.baseUrlSlug", { slug: env.slug })}
                           value={ed.base_url}
                           onChange={(e) =>
                             setEnvEdits((prev) => ({
@@ -576,20 +573,20 @@ export function ProjectsPage() {
                     disabled={savingEnv}
                     sx={{ mb: 3 }}
                   >
-                    {savingEnv ? "Saving…" : "Save environments"}
+                    {savingEnv ? t("common.saving") : t("projects.saveEnvironments")}
                   </Button>
                 )}
 
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                  Members
+                  {t("common.members")}
                 </Typography>
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Email</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Role (project)</TableCell>
+                        <TableCell>{t("projects.memberTableEmail")}</TableCell>
+                        <TableCell>{t("projects.memberTableName")}</TableCell>
+                        <TableCell>{t("projects.memberTableRole")}</TableCell>
                         <TableCell width={56} />
                       </TableRow>
                     </TableHead>
@@ -608,8 +605,8 @@ export function ProjectsPage() {
                                 SelectProps={{ native: true }}
                                 sx={{ minWidth: 100 }}
                               >
-                                <option value="member">Member</option>
-                                <option value="admin">Project admin</option>
+                                <option value="member">{t("projects.roleMember")}</option>
+                                <option value="admin">{t("projects.roleProjectAdmin")}</option>
                               </TextField>
                             ) : (
                               <Chip
@@ -625,7 +622,7 @@ export function ProjectsPage() {
                               <IconButton
                                 size="small"
                                 color="error"
-                                aria-label="remove member"
+                                aria-label={t("projects.removeMemberAria")}
                                 onClick={() => handleRemoveMember(m.id)}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
@@ -640,13 +637,13 @@ export function ProjectsPage() {
 
                 {canManageProject && (
                   <Box component="form" onSubmit={handleAddMember} sx={{ mt: 2 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                      Users must be registered. Separate multiple emails with <strong>;</strong>.
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }} component="div">
+                      <Trans i18nKey="projects.addMemberHint" components={{ 0: <strong /> }} />
                     </Typography>
                     <Stack direction="column" spacing={1}>
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "flex-end" }}>
                         <TextField
-                          label="Email (separate multiple with ;)"
+                          label={t("projects.memberEmailLabel")}
                           value={memberEmail}
                           onChange={(e) => { setMemberEmail(e.target.value); setAddMemberResults([]); }}
                           required
@@ -657,7 +654,7 @@ export function ProjectsPage() {
                           maxRows={4}
                         />
                         <TextField
-                          label="Role"
+                          label={t("common.role")}
                           select
                           value={memberRole}
                           onChange={(e) => setMemberRole(e.target.value)}
@@ -665,8 +662,8 @@ export function ProjectsPage() {
                           sx={{ minWidth: 130 }}
                           SelectProps={{ native: true }}
                         >
-                          <option value="member">Member</option>
-                          <option value="admin">Project admin</option>
+                          <option value="member">{t("projects.roleMember")}</option>
+                          <option value="admin">{t("projects.roleProjectAdmin")}</option>
                         </TextField>
                         <Button
                           type="submit"
@@ -675,7 +672,7 @@ export function ProjectsPage() {
                           disabled={addingMembers}
                           sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
                         >
-                          {addingMembers ? "Adding…" : "Add member"}
+                          {addingMembers ? t("common.adding") : t("projects.addMember")}
                         </Button>
                       </Stack>
                       {addMemberResults.length > 0 && (
@@ -698,7 +695,7 @@ export function ProjectsPage() {
               </>
             ) : (
               <Typography color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
-                Select a project to view details
+                {t("projects.selectProjectDetail")}
               </Typography>
             )}
           </CardContent>

@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import {
   Box,
   Typography,
@@ -58,6 +60,7 @@ const ENV_COLORS: Record<string, string> = {
 };
 
 export function ApisPage({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
   const [tree, setTree] = useState<FolderTree[]>([]);
   const [selectedEp, setSelectedEp] = useState<EndpointOut | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -152,12 +155,12 @@ export function ApisPage({ projectId }: { projectId: string }) {
     if (res.ok) { loadTree(); setShowNewFolder(false); }
     else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Create failed");
+      setError(d.detail || t("apis.createFailed"));
     }
   };
 
   const handleDeleteFolder = async (folderId: string) => {
-    if (!confirm("Delete this folder and all its endpoints?")) return;
+    if (!confirm(t("apis.deleteFolderConfirm"))) return;
     await fetch(`${api}/folders/${folderId}`, { method: "DELETE", headers: headers() });
     if (selectedEp?.folder_id === folderId) setSelectedEp(null);
     loadTree();
@@ -167,7 +170,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
     const res = await fetch(`${api}/endpoints`, {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify({ folder_id: folderId, name: "New Request", method: "GET", url: "" }),
+      body: JSON.stringify({ folder_id: folderId, name: t("apis.newRequest"), method: "GET", url: "" }),
     });
     if (res.ok) {
       const ep: EndpointOut = await res.json();
@@ -220,17 +223,17 @@ export function ApisPage({ projectId }: { projectId: string }) {
       >
         <Box sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
           <Stack direction="row" alignItems="center" spacing={0.5}>
-            <Tooltip title="New folder">
+            <Tooltip title={t("apis.newFolder")}>
               <IconButton size="small" onClick={() => setShowNewFolder(true)}>
                 <CreateNewFolderOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Import from cURL / OpenAPI">
+            <Tooltip title={t("apis.importCurlOpenapi")}>
               <IconButton size="small" onClick={() => setShowImport(true)}>
                 <FileUploadOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Project Variables">
+            <Tooltip title={t("apis.projectVariables")}>
               <IconButton
                 size="small"
                 onClick={() => setShowVarsPanel(true)}
@@ -241,7 +244,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
             </Tooltip>
             {Object.keys(variables).length > 0 && (
               <Chip
-                label={`${Object.keys(variables).length} vars`}
+                label={t("apis.varCount", { n: Object.keys(variables).length })}
                 size="small"
                 onClick={() => setShowVarsPanel(true)}
                 sx={{ height: 18, fontSize: 10, fontWeight: 700, bgcolor: "#dbeafe", color: "#2563eb", cursor: "pointer" }}
@@ -274,7 +277,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
                 );
               })}
               {baseUrl && (
-                <Tooltip title={`Base URL: ${baseUrl}`} placement="right">
+                <Tooltip title={`${t("common.baseUrl")}: ${baseUrl}`} placement="right">
                   <Typography
                     variant="caption"
                     noWrap
@@ -310,11 +313,15 @@ export function ApisPage({ projectId }: { projectId: string }) {
               onAddEp={handleCreateEndpoint}
               onDeleteFolder={handleDeleteFolder}
               onDeleteEp={handleDeleteEndpoint}
+              labels={{
+                addEndpoint: t("apis.addEndpoint"),
+                deleteFolder: t("apis.deleteFolder"),
+              }}
             />
           ))}
           {tree.length === 0 && (
             <Typography variant="body2" sx={{ px: 2, py: 4, color: "text.disabled", textAlign: "center" }}>
-              No folders yet. Create one to start.
+              {t("apis.noFolders")}
             </Typography>
           )}
         </Box>
@@ -335,7 +342,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
           />
         ) : (
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "text.disabled" }}>
-            <Typography>Select an endpoint or create a new one</Typography>
+            <Typography>{t("apis.selectEndpoint")}</Typography>
           </Box>
         )}
       </Box>
@@ -360,9 +367,9 @@ export function ApisPage({ projectId }: { projectId: string }) {
       {/* variables dialog */}
       <Dialog open={showVarsPanel} onClose={() => setShowVarsPanel(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 0 }}>
-          Project Variables
+          {t("apis.varsDialogTitle")}
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-            Reference in URL / Headers / Body with {"{{var}}"} &nbsp;·&nbsp; Current env: {selectedEnvSlug.toUpperCase()}
+            {t("apis.varsDialogSubtitle", { syntax: "{{var}}", env: selectedEnvSlug.toUpperCase() })}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
@@ -373,7 +380,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowVarsPanel(false)}>Close</Button>
+          <Button onClick={() => setShowVarsPanel(false)}>{t("common.close")}</Button>
         </DialogActions>
       </Dialog>
     </Box>
@@ -385,6 +392,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
 function FolderNode({
   folder, depth, expanded, selectedId,
   onToggle, onSelectEp, onAddEp, onDeleteFolder, onDeleteEp,
+  labels,
 }: {
   folder: FolderTree;
   depth: number;
@@ -395,6 +403,7 @@ function FolderNode({
   onAddEp: (folderId: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onDeleteEp: (epId: string) => void;
+  labels: { addEndpoint: string; deleteFolder: string };
 }) {
   const isOpen = expanded.has(folder.id);
 
@@ -414,10 +423,10 @@ function FolderNode({
           {folder.name}
         </Typography>
         <Stack direction="row" className="folder-actions" sx={{ opacity: 0, transition: "opacity .15s" }}>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddEp(folder.id); }} title="Add endpoint">
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddEp(folder.id); }} title={labels.addEndpoint}>
             <AddIcon sx={{ fontSize: 16 }} />
           </IconButton>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }} title="Delete folder">
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }} title={labels.deleteFolder}>
             <DeleteOutlineIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Stack>
@@ -466,6 +475,7 @@ function FolderNode({
               onAddEp={onAddEp}
               onDeleteFolder={onDeleteFolder}
               onDeleteEp={onDeleteEp}
+              labels={labels}
             />
           ))}
         </>
@@ -503,14 +513,17 @@ function kvToJson(pairs: KVPair[]): string {
 function KVEditor({
   value,
   onChange,
-  keyPlaceholder = "Key",
-  valuePlaceholder = "Value",
+  keyPlaceholder,
+  valuePlaceholder,
 }: {
   value: string;
   onChange: (json: string) => void;
   keyPlaceholder?: string;
   valuePlaceholder?: string;
 }) {
+  const { t } = useTranslation();
+  const kp = keyPlaceholder ?? t("common.key");
+  const vp = valuePlaceholder ?? t("common.value");
   const [pairs, setPairs] = useState<KVPair[]>(() => parseJsonToKV(value));
   const [rawMode, setRawMode] = useState(false);
   const [rawText, setRawText] = useState(value || "{}");
@@ -551,7 +564,7 @@ function KVEditor({
             }}
             sx={{ textTransform: "none", fontSize: 12 }}
           >
-            Table view
+            {t("common.tableView")}
           </Button>
         </Stack>
         <TextField
@@ -580,7 +593,7 @@ function KVEditor({
           }}
           sx={{ textTransform: "none", fontSize: 12 }}
         >
-          Raw JSON
+          {t("common.rawJson")}
         </Button>
       </Stack>
       <Box
@@ -604,8 +617,8 @@ function KVEditor({
       >
         <thead>
           <tr>
-            <Box component="th" sx={{ width: "35%" }}>{keyPlaceholder}</Box>
-            <th>{valuePlaceholder}</th>
+            <Box component="th" sx={{ width: "35%" }}>{kp}</Box>
+            <th>{vp}</th>
             <Box component="th" sx={{ width: 40 }} />
           </tr>
         </thead>
@@ -619,7 +632,7 @@ function KVEditor({
                   variant="standard"
                   fullWidth
                   size="small"
-                  placeholder={keyPlaceholder}
+                  placeholder={kp}
                   InputProps={{ disableUnderline: true }}
                   inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13 } }}
                 />
@@ -631,7 +644,7 @@ function KVEditor({
                   variant="standard"
                   fullWidth
                   size="small"
-                  placeholder={valuePlaceholder}
+                  placeholder={vp}
                   InputProps={{ disableUnderline: true }}
                   inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13 } }}
                 />
@@ -655,7 +668,7 @@ function KVEditor({
         onClick={addRow}
         sx={{ mt: 0.5, textTransform: "none", fontSize: 12 }}
       >
-        Add row
+        {t("common.addRow")}
       </Button>
     </Box>
   );
@@ -680,6 +693,7 @@ function VariablesPanel({
   onChange: (vars: Record<string, string>) => void;
   envSlug: string;
 }) {
+  const { t } = useTranslation();
   const entries = Object.entries(variables);
   const [pairs, setPairs] = useState<{ key: string; value: string }[]>(() => {
     const list = entries.map(([key, value]) => ({ key, value }));
@@ -725,7 +739,7 @@ function VariablesPanel({
         <Stack key={idx} direction="row" spacing={0.5} sx={{ mb: 0.5 }} alignItems="center">
           <TextField
             size="small"
-            placeholder="key"
+            placeholder={t("apis.placeholderKey")}
             value={p.key}
             onChange={(e) => updatePair(idx, "key", e.target.value)}
             onBlur={handleBlur}
@@ -734,7 +748,7 @@ function VariablesPanel({
           />
           <TextField
             size="small"
-            placeholder="value"
+            placeholder={t("apis.placeholderValue")}
             value={p.value}
             onChange={(e) => updatePair(idx, "value", e.target.value)}
             onBlur={handleBlur}
@@ -765,6 +779,7 @@ function EndpointEditor({
   onChange: (ep: EndpointOut) => void;
   onSave: (ep: EndpointOut) => void;
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState(0);
   const [sending, setSending] = useState(false);
   const [response, setResponse] = useState<RunResponse | null>(null);
@@ -850,7 +865,7 @@ function EndpointEditor({
         }
       } else {
         const d = await res.json().catch(() => ({}));
-        setRunError(d.detail || `Request failed (${res.status})`);
+        setRunError(d.detail || t("apis.requestFailed", { status: res.status }));
       }
     } catch (err) {
       setRunError(String(err));
@@ -870,7 +885,7 @@ function EndpointEditor({
           inputProps={{ style: { fontSize: 18, fontWeight: 600 } }}
         />
         <Button variant="contained" size="small" onClick={() => onSave(endpoint)}>
-          Save
+          {t("apis.save")}
         </Button>
       </Stack>
 
@@ -893,7 +908,7 @@ function EndpointEditor({
         <TextField
           value={endpoint.url}
           onChange={(e) => update({ url: e.target.value })}
-          placeholder={baseUrl ? "/path/to/endpoint" : "https://api.example.com/path"}
+          placeholder={baseUrl ? t("apis.urlPlaceholder") : t("apis.urlPlaceholderFull")}
           size="small"
           sx={{ flex: 1 }}
         />
@@ -906,7 +921,7 @@ function EndpointEditor({
           startIcon={sending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
           sx={{ minWidth: 100, fontWeight: 700, textTransform: "none" }}
         >
-          {sending ? "Sending…" : "Send"}
+          {sending ? t("common.sending") : t("apis.send")}
         </Button>
       </Stack>
       {(showBaseUrlHint || hasVarSubstitution) && (
@@ -927,39 +942,39 @@ function EndpointEditor({
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}>
         <Tab
-          label={headerCount > 0 ? `Headers (${headerCount})` : "Headers"}
+          label={headerCount > 0 ? t("apis.tabHeadersCount", { n: headerCount }) : t("apis.tabHeaders")}
           sx={{ textTransform: "none" }}
         />
         <Tab
-          label={paramCount > 0 ? `Query Params (${paramCount})` : "Query Params"}
+          label={paramCount > 0 ? t("apis.tabQueryCount", { n: paramCount }) : t("apis.tabQuery")}
           sx={{ textTransform: "none" }}
         />
-        <Tab label="Body" sx={{ textTransform: "none" }} />
+        <Tab label={t("apis.tabBody")} sx={{ textTransform: "none" }} />
         <Tab
-          label={extractRules.length > 0 ? `Extracts (${extractRules.length})` : "Extracts"}
+          label={extractRules.length > 0 ? t("apis.tabExtractsCount", { n: extractRules.length }) : t("apis.tabExtracts")}
           sx={{ textTransform: "none" }}
         />
         <Tab
-          label={assertions.length > 0 ? `Assertions (${assertions.length})` : "Assertions"}
+          label={assertions.length > 0 ? t("apis.tabAssertionsCount", { n: assertions.length }) : t("apis.tabAssertions")}
           sx={{ textTransform: "none" }}
         />
-        <Tab label="Description" sx={{ textTransform: "none" }} />
+        <Tab label={t("apis.tabDescription")} sx={{ textTransform: "none" }} />
       </Tabs>
 
       {tab === 0 && (
         <KVEditor
           value={endpoint.headers_json}
           onChange={(v) => update({ headers_json: v })}
-          keyPlaceholder="Header"
-          valuePlaceholder="Value"
+          keyPlaceholder={t("apis.headerParam")}
+          valuePlaceholder={t("common.value")}
         />
       )}
       {tab === 1 && (
         <KVEditor
           value={endpoint.query_params_json}
           onChange={(v) => update({ query_params_json: v })}
-          keyPlaceholder="Parameter"
-          valuePlaceholder="Value"
+          keyPlaceholder={t("apis.parameter")}
+          valuePlaceholder={t("common.value")}
         />
       )}
       {tab === 2 && (
@@ -970,10 +985,10 @@ function EndpointEditor({
             size="small"
             sx={{ mb: 1, minWidth: 120 }}
           >
-            <MenuItem value="none">none</MenuItem>
-            <MenuItem value="json">JSON</MenuItem>
-            <MenuItem value="raw">Raw</MenuItem>
-            <MenuItem value="form-data">Form Data</MenuItem>
+            <MenuItem value="none">{t("apis.bodyTypeNone")}</MenuItem>
+            <MenuItem value="json">{t("common.json")}</MenuItem>
+            <MenuItem value="raw">{t("apis.bodyTypeRaw")}</MenuItem>
+            <MenuItem value="form-data">{t("apis.bodyTypeForm")}</MenuItem>
           </Select>
           {endpoint.body_type !== "none" && (
             <TextField
@@ -993,7 +1008,7 @@ function EndpointEditor({
       {tab === 3 && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-            Automatically extract values from the response after sending a request and store them as project variables. Reference them in URL / Headers / Body with {"{{var}}"}.
+            {t("apis.extractIntro", { syntax: "{{var}}" })}
           </Typography>
           {extractRules.map((rule, idx) => (
             <Box
@@ -1003,8 +1018,8 @@ function EndpointEditor({
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                 <TextField
                   size="small"
-                  label="Variable name"
-                  placeholder="e.g. token"
+                  label={t("common.variableName")}
+                  placeholder={t("orch.varPlaceholder")}
                   value={rule.var_name}
                   onChange={(e) => {
                     const next = [...extractRules];
@@ -1024,9 +1039,9 @@ function EndpointEditor({
                   }}
                   sx={{ fontSize: 12, minWidth: 100 }}
                 >
-                  <MenuItem value="body" sx={{ fontSize: 12 }}>Body</MenuItem>
-                  <MenuItem value="header" sx={{ fontSize: 12 }}>Header</MenuItem>
-                  <MenuItem value="status" sx={{ fontSize: 12 }}>Status</MenuItem>
+                  <MenuItem value="body" sx={{ fontSize: 12 }}>{t("common.body")}</MenuItem>
+                  <MenuItem value="header" sx={{ fontSize: 12 }}>{t("common.header")}</MenuItem>
+                  <MenuItem value="status" sx={{ fontSize: 12 }}>{t("common.status")}</MenuItem>
                 </Select>
                 <IconButton
                   size="small"
@@ -1039,7 +1054,7 @@ function EndpointEditor({
                 <TextField
                   size="small"
                   fullWidth
-                  label={rule.source === "body" ? "JSONPath" : "Header Name"}
+                  label={rule.source === "body" ? t("common.jsonPath") : t("common.headerName")}
                   placeholder={rule.source === "body" ? "$.access_token  or  $.data[0].id" : "Authorization"}
                   value={rule.json_path}
                   onChange={(e) => {
@@ -1059,7 +1074,7 @@ function EndpointEditor({
             onClick={() => setExtractRules([...extractRules, { var_name: "", source: "body", json_path: "" }])}
             sx={{ textTransform: "none", fontSize: 12 }}
           >
-            Add extract rule
+            {t("common.addExtractRule")}
           </Button>
         </Box>
       )}
@@ -1075,7 +1090,7 @@ function EndpointEditor({
           maxRows={12}
           fullWidth
           size="small"
-          placeholder="Describe what this endpoint does…"
+          placeholder={t("apis.describeEndpoint")}
         />
       )}
 
@@ -1083,7 +1098,7 @@ function EndpointEditor({
       {(response || runError || sending) && (
         <Box sx={{ mt: 3, borderTop: 2, borderColor: "divider", pt: 2 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, fontSize: 14 }}>
-            Response
+            {t("common.response")}
           </Typography>
 
           {runError && <Alert severity="error" sx={{ mb: 1 }}>{runError}</Alert>}
@@ -1091,7 +1106,7 @@ function EndpointEditor({
           {sending && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 2 }}>
               <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">Sending request…</Typography>
+              <Typography variant="body2" color="text.secondary">{t("apis.sendingRequest")}</Typography>
             </Box>
           )}
 
@@ -1105,7 +1120,7 @@ function EndpointEditor({
                   sx={{ fontWeight: 700, fontSize: 13 }}
                 />
                 <Typography variant="caption" color="text.secondary">
-                  {response.elapsed_ms.toFixed(0)} ms
+                  {response.elapsed_ms.toFixed(0)} {t("common.ms")}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {formatBytes(response.size_bytes)}
@@ -1113,14 +1128,14 @@ function EndpointEditor({
                 {response.assertion_results.length > 0 && (
                   <>
                     <Chip
-                      label={`${response.assertions_passed} passed`}
+                      label={`${response.assertions_passed} ${t("common.passed")}`}
                       size="small"
                       color="success"
                       sx={{ fontWeight: 700, fontSize: 12 }}
                     />
                     {response.assertions_failed > 0 && (
                       <Chip
-                        label={`${response.assertions_failed} failed`}
+                        label={`${response.assertions_failed} ${t("common.failed")}`}
                         size="small"
                         color="error"
                         sx={{ fontWeight: 700, fontSize: 12 }}
@@ -1137,7 +1152,7 @@ function EndpointEditor({
               {response.extracted_vars && Object.keys(response.extracted_vars).length > 0 && (
                 <Box sx={{ mb: 1.5, p: 1.25, bgcolor: "#dbeafe", borderRadius: 1 }}>
                   <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ display: "block", mb: 0.5 }}>
-                    Extracted Variables → saved to project variables
+                    {t("common.extractedVarsSaved")}
                   </Typography>
                   {Object.entries(response.extracted_vars).map(([k, v]) => (
                     <Stack key={k} direction="row" spacing={1} alignItems="baseline" sx={{ mb: 0.25 }}>
@@ -1162,12 +1177,12 @@ function EndpointEditor({
                 return (
                   <>
                     <Tabs value={respTab} onChange={(_, v) => setRespTab(v)} sx={{ mb: 1, borderBottom: 1, borderColor: "divider" }}>
-                      <Tab label="Body" sx={{ textTransform: "none", fontSize: 13 }} />
+                      <Tab label={t("apis.tabBody")} sx={{ textTransform: "none", fontSize: 13 }} />
                       <Tab
-                        label={`Headers (${Object.keys(response.headers).length})`}
+                        label={t("apis.tabHeadersCount", { n: Object.keys(response.headers).length })}
                         sx={{ textTransform: "none", fontSize: 13 }}
                       />
-                      {isHtml && <Tab label="Preview" sx={{ textTransform: "none", fontSize: 13 }} />}
+                      {isHtml && <Tab label={t("common.preview")} sx={{ textTransform: "none", fontSize: 13 }} />}
                     </Tabs>
 
                     {respTab === 0 && (
@@ -1215,7 +1230,7 @@ function EndpointEditor({
                       <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden", height: 520 }}>
                         <iframe
                           srcDoc={response.body}
-                          title="Response HTML Preview"
+                          title={t("apis.iframePreviewTitle")}
                           sandbox="allow-same-origin allow-scripts"
                           style={{ width: "100%", height: "100%", border: "none" }}
                         />
@@ -1235,8 +1250,8 @@ function EndpointEditor({
                       >
                         <thead>
                           <tr>
-                            <Box component="th" sx={{ width: "30%" }}>Header</Box>
-                            <th>Value</th>
+                            <Box component="th" sx={{ width: "30%" }}>{t("common.header")}</Box>
+                            <th>{t("common.value")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1261,43 +1276,45 @@ function EndpointEditor({
 }
 
 // ---- Assertion operator options per type ----
-const ASSERTION_OPERATORS: Record<string, { value: string; label: string }[]> = {
-  status_code: [
-    { value: "eq", label: "= equals" },
-    { value: "ne", label: "≠ not equals" },
-    { value: "gt", label: "> greater than" },
-    { value: "lt", label: "< less than" },
-    { value: "gte", label: "≥ ≥" },
-    { value: "lte", label: "≤ ≤" },
-  ],
-  response_time: [
-    { value: "lt", label: "< less than (ms)" },
-    { value: "lte", label: "≤ ≤ (ms)" },
-    { value: "gt", label: "> greater than (ms)" },
-    { value: "eq", label: "= equals (ms)" },
-  ],
-  json_path: [
-    { value: "eq", label: "= equals" },
-    { value: "ne", label: "≠ not equals" },
-    { value: "contains", label: "contains" },
-    { value: "not_contains", label: "not contains" },
-    { value: "exists", label: "exists" },
-    { value: "not_exists", label: "not exists" },
-    { value: "matches", label: "regex matches" },
-  ],
-  header: [
-    { value: "eq", label: "= equals" },
-    { value: "ne", label: "≠ not equals" },
-    { value: "contains", label: "contains" },
-    { value: "exists", label: "exists" },
-    { value: "not_exists", label: "not exists" },
-  ],
-  body_contains: [
-    { value: "contains", label: "contains" },
-    { value: "not_contains", label: "not contains" },
-    { value: "matches", label: "regex matches" },
-  ],
-};
+function buildApisAssertionOperators(tt: (key: string) => string): Record<string, { value: string; label: string }[]> {
+  return {
+    status_code: [
+      { value: "eq", label: tt("apis.opEq") },
+      { value: "ne", label: tt("apis.opNe") },
+      { value: "gt", label: tt("apis.opGt") },
+      { value: "lt", label: tt("apis.opLt") },
+      { value: "gte", label: tt("apis.opGte") },
+      { value: "lte", label: tt("apis.opLte") },
+    ],
+    response_time: [
+      { value: "lt", label: tt("apis.opLtMs") },
+      { value: "lte", label: tt("apis.opLteMs") },
+      { value: "gt", label: tt("apis.opGtMs") },
+      { value: "eq", label: tt("apis.opEqMs") },
+    ],
+    json_path: [
+      { value: "eq", label: tt("apis.opEq") },
+      { value: "ne", label: tt("apis.opNe") },
+      { value: "contains", label: tt("apis.opContains") },
+      { value: "not_contains", label: tt("apis.opNotContains") },
+      { value: "exists", label: tt("apis.opExists") },
+      { value: "not_exists", label: tt("apis.opNotExists") },
+      { value: "matches", label: tt("apis.opMatches") },
+    ],
+    header: [
+      { value: "eq", label: tt("apis.opEq") },
+      { value: "ne", label: tt("apis.opNe") },
+      { value: "contains", label: tt("apis.opContains") },
+      { value: "exists", label: tt("apis.opExists") },
+      { value: "not_exists", label: tt("apis.opNotExists") },
+    ],
+    body_contains: [
+      { value: "contains", label: tt("apis.opContains") },
+      { value: "not_contains", label: tt("apis.opNotContains") },
+      { value: "matches", label: tt("apis.opMatches") },
+    ],
+  };
+}
 
 function newAssertion(): AssertionIn {
   return {
@@ -1342,6 +1359,8 @@ function AssertionsEditor({
   onChange: (a: AssertionIn[]) => void;
   variables?: Record<string, string>;
 }) {
+  const { t } = useTranslation();
+  const assertionOps = useMemo(() => buildApisAssertionOperators(t), [t]);
   const varNames = Object.keys(variables || {});
   const update = (idx: number, patch: Partial<AssertionIn>) => {
     const next = assertions.map((a, i) => (i === idx ? { ...a, ...patch } : a));
@@ -1351,11 +1370,11 @@ function AssertionsEditor({
   return (
     <Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-        Add assertions to verify the response. Pass/fail results are shown after sending the request.
+        {t("apis.assertionsIntro")}
       </Typography>
       {varNames.length > 0 && (
         <Typography variant="caption" sx={{ display: "block", mb: 1.5, color: "#7c3aed", fontFamily: "monospace" }}>
-          Available vars: {varNames.map((k) => `{{${k}}}`).join("  ")}
+          {t("apis.availableVars")} {varNames.map((k) => `{{${k}}}`).join("  ")}
         </Typography>
       )}
       {assertions.map((a, idx) => (
@@ -1368,21 +1387,21 @@ function AssertionsEditor({
               size="small"
               value={a.type}
               onChange={(e) => {
-                const t = e.target.value as AssertionIn["type"];
-                const ops = ASSERTION_OPERATORS[t] || [];
+                const nextType = e.target.value as AssertionIn["type"];
+                const ops = assertionOps[nextType] || [];
                 update(idx, {
-                  type: t,
+                  type: nextType,
                   operator: ops[0]?.value as AssertionIn["operator"] || "eq",
-                  expected: t === "status_code" ? "200" : "",
+                  expected: nextType === "status_code" ? "200" : "",
                 });
               }}
               sx={{ fontSize: 12, minWidth: 130 }}
             >
-              <MenuItem value="status_code" sx={{ fontSize: 12 }}>Status Code</MenuItem>
-              <MenuItem value="response_time" sx={{ fontSize: 12 }}>Response Time</MenuItem>
-              <MenuItem value="json_path" sx={{ fontSize: 12 }}>JSON Path</MenuItem>
-              <MenuItem value="header" sx={{ fontSize: 12 }}>Header</MenuItem>
-              <MenuItem value="body_contains" sx={{ fontSize: 12 }}>Body Contains</MenuItem>
+              <MenuItem value="status_code" sx={{ fontSize: 12 }}>{t("common.statusCode")}</MenuItem>
+              <MenuItem value="response_time" sx={{ fontSize: 12 }}>{t("common.responseTime")}</MenuItem>
+              <MenuItem value="json_path" sx={{ fontSize: 12 }}>{t("common.jsonPathType")}</MenuItem>
+              <MenuItem value="header" sx={{ fontSize: 12 }}>{t("common.header")}</MenuItem>
+              <MenuItem value="body_contains" sx={{ fontSize: 12 }}>{t("common.bodyContains")}</MenuItem>
             </Select>
             <Select
               size="small"
@@ -1390,7 +1409,7 @@ function AssertionsEditor({
               onChange={(e) => update(idx, { operator: e.target.value as AssertionIn["operator"] })}
               sx={{ fontSize: 12, minWidth: 120 }}
             >
-              {(ASSERTION_OPERATORS[a.type] || []).map((op) => (
+              {(assertionOps[a.type] || []).map((op) => (
                 <MenuItem key={op.value} value={op.value} sx={{ fontSize: 12 }}>{op.label}</MenuItem>
               ))}
             </Select>
@@ -1402,7 +1421,7 @@ function AssertionsEditor({
           {a.type === "json_path" && (
             <Box sx={{ mb: 1 }}>
               <TextField
-                size="small" fullWidth label="JSONPath" placeholder="$.data.token  or  $.data.{{field}}"
+                size="small" fullWidth label={t("common.jsonPath")} placeholder="$.data.token  or  $.data.{{field}}"
                 value={a.json_path}
                 onChange={(e) => update(idx, { json_path: e.target.value })}
                 inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -1413,7 +1432,7 @@ function AssertionsEditor({
           {a.type === "header" && (
             <Box sx={{ mb: 1 }}>
               <TextField
-                size="small" fullWidth label="Header Name" placeholder="content-type"
+                size="small" fullWidth label={t("common.headerName")} placeholder="content-type"
                 value={a.header_name}
                 onChange={(e) => update(idx, { header_name: e.target.value })}
                 inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -1425,7 +1444,7 @@ function AssertionsEditor({
             <Box>
               <TextField
                 size="small" fullWidth
-                label={a.type === "response_time" ? "Expected (ms)  supports {{var}}" : "Expected value  supports {{var}}"}
+                label={a.type === "response_time" ? t("apis.expectedMs", { sym: "{{var}}" }) : t("apis.expectedValue", { sym: "{{var}}" })}
                 placeholder={
                   a.type === "status_code" ? "200  or  {{expected_code}}"
                   : a.type === "response_time" ? "2000  or  {{max_ms}}"
@@ -1442,7 +1461,7 @@ function AssertionsEditor({
             <Box>
               <TextField
                 size="small" fullWidth
-                label="Expected Text / Regex  supports {{var}}"
+                label={t("apis.expectedTextRegex", { sym: "{{var}}" })}
                 placeholder={a.operator === "matches" ? "^\\d+$  or  ^{{prefix}}" : "some text  or  {{keyword}}"}
                 value={a.expected}
                 onChange={(e) => update(idx, { expected: e.target.value })}
@@ -1460,17 +1479,18 @@ function AssertionsEditor({
         onClick={() => onChange([...assertions, newAssertion()])}
         sx={{ textTransform: "none", fontSize: 12 }}
       >
-        Add Assertion
+        {t("common.addAssertion")}
       </Button>
     </Box>
   );
 }
 
 function AssertionResultsPanel({ results }: { results: AssertionResult[] }) {
+  const { t } = useTranslation();
   return (
     <Box sx={{ mb: 1.5 }}>
       <Typography variant="caption" fontWeight={700} sx={{ display: "block", mb: 0.75, color: "text.secondary" }}>
-        Assertions
+        {t("common.assertions")}
       </Typography>
       {results.map((r, i) => (
         <Stack
@@ -1509,7 +1529,7 @@ function AssertionResultsPanel({ results }: { results: AssertionResult[] }) {
             )}
             {r.actual && r.actual !== "(body)" && (
               <Typography variant="caption" sx={{ color: "text.secondary", fontSize: 11, display: "block", fontFamily: "monospace" }}>
-                actual: {r.actual}
+                {t("common.actual")}: {r.actual}
               </Typography>
             )}
           </Box>
@@ -1526,7 +1546,7 @@ function formatBytes(bytes: number): string {
 }
 
 function tryFormatResponseBody(body: string, contentType?: string): string {
-  if (!body) return "(empty)";
+  if (!body) return i18n.t("common.emptyBody");
   const ct = (contentType || "").toLowerCase();
   if (ct.includes("json") || body.trim().startsWith("{") || body.trim().startsWith("[")) {
     try {
@@ -1571,6 +1591,7 @@ function NewFolderDialog({
   onClose: () => void;
   onCreate: (name: string, parentId: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [parentId, setParentId] = useState<string>("");
 
@@ -1586,10 +1607,10 @@ function NewFolderDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>New Folder</DialogTitle>
+      <DialogTitle>{t("apis.newFolderTitle")}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
         <TextField
-          label="Folder name"
+          label={t("apis.folderName")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           size="small"
@@ -1603,7 +1624,7 @@ function NewFolderDialog({
           displayEmpty
           fullWidth
         >
-          <MenuItem value="">Root (no parent)</MenuItem>
+          <MenuItem value="">{t("apis.rootNoParent")}</MenuItem>
           {flatFolders.map((f) => (
             <MenuItem key={f.id} value={f.id}>
               {"  ".repeat(f.depth)}{f.name}
@@ -1612,8 +1633,8 @@ function NewFolderDialog({
         </Select>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={!name.trim()}>Create</Button>
+        <Button onClick={onClose}>{t("common.cancel")}</Button>
+        <Button variant="contained" onClick={handleSubmit} disabled={!name.trim()}>{t("common.create")}</Button>
       </DialogActions>
     </Dialog>
   );
@@ -1630,6 +1651,7 @@ function ImportDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState(0);
   const [curlText, setCurlText] = useState("");
   const [curlFolderId, setCurlFolderId] = useState("");
@@ -1652,7 +1674,7 @@ function ImportDialog({
     });
     setLoading(false);
     if (res.ok) { setCurlText(""); onDone(); }
-    else { const d = await res.json().catch(() => ({})); setError(d.detail || "Import failed"); }
+    else { const d = await res.json().catch(() => ({})); setError(d.detail || t("apis.importFailed")); }
   };
 
   const handleOpenapiImport = async () => {
@@ -1669,7 +1691,7 @@ function ImportDialog({
     });
     setLoading(false);
     if (res.ok) { setOpenapiText(""); onDone(); }
-    else { const d = await res.json().catch(() => ({})); setError(d.detail || "Import failed"); }
+    else { const d = await res.json().catch(() => ({})); setError(d.detail || t("apis.importFailed")); }
   };
 
   return (
@@ -1677,13 +1699,13 @@ function ImportDialog({
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           <ContentPasteIcon fontSize="small" />
-          <span>Import APIs</span>
+          <span>{t("apis.importApis")}</span>
         </Stack>
       </DialogTitle>
       <DialogContent>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-          <Tab label="cURL" sx={{ textTransform: "none" }} />
-          <Tab label="OpenAPI" sx={{ textTransform: "none" }} />
+          <Tab label={t("apis.tabCurl")} sx={{ textTransform: "none" }} />
+          <Tab label={t("apis.tabOpenapi")} sx={{ textTransform: "none" }} />
         </Tabs>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -1697,7 +1719,7 @@ function ImportDialog({
               displayEmpty
               fullWidth
             >
-              <MenuItem value="" disabled>Select target folder</MenuItem>
+              <MenuItem value="" disabled>{t("apis.selectTargetFolder")}</MenuItem>
               {flat.map((f) => (
                 <MenuItem key={f.id} value={f.id}>{"  ".repeat(f.depth)}{f.name}</MenuItem>
               ))}
@@ -1710,7 +1732,7 @@ function ImportDialog({
               maxRows={14}
               fullWidth
               size="small"
-              placeholder={'Paste your cURL command here…\n\ncurl -X POST https://api.example.com/users \\\n  -H "Content-Type: application/json" \\\n  -d \'{"name":"John"}\''}
+              placeholder={t("apis.curlPlaceholder")}
               inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13 } }}
             />
           </Box>
@@ -1725,7 +1747,7 @@ function ImportDialog({
               displayEmpty
               fullWidth
             >
-              <MenuItem value="">Root (no parent folder)</MenuItem>
+              <MenuItem value="">{t("apis.openapiRoot")}</MenuItem>
               {flat.map((f) => (
                 <MenuItem key={f.id} value={f.id}>{"  ".repeat(f.depth)}{f.name}</MenuItem>
               ))}
@@ -1738,20 +1760,20 @@ function ImportDialog({
               maxRows={18}
               fullWidth
               size="small"
-              placeholder="Paste OpenAPI JSON or YAML spec here…"
+              placeholder={t("apis.openapiPlaceholder")}
               inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13 } }}
             />
           </Box>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t("common.cancel")}</Button>
         <Button
           variant="contained"
           disabled={loading || (tab === 0 ? (!curlText.trim() || !curlFolderId) : !openapiText.trim())}
           onClick={tab === 0 ? handleCurlImport : handleOpenapiImport}
         >
-          {loading ? "Importing…" : "Import"}
+          {loading ? t("common.importing") : t("apis.import")}
         </Button>
       </DialogActions>
     </Dialog>

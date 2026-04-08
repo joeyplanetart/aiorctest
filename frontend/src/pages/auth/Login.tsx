@@ -6,16 +6,23 @@ import {
   Link as MuiLink,
   Paper,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import { useLogin } from "@refinedev/core";
+import { useTranslation } from "react-i18next";
+import { setAppLanguage } from "@/i18n";
 
 export function LoginPage() {
+  const { t, i18n } = useTranslation();
   const { mutate: login, isLoading } = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const langValue = i18n.language.startsWith("zh") ? "zh" : "en";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +30,7 @@ export function LoginPage() {
     login(
       { email, password },
       {
-        onError: (err) => setError(err.message || "Login failed"),
+        onError: (err) => setError(err.message || t("auth.loginFailed")),
       },
     );
   };
@@ -37,8 +44,22 @@ export function LoginPage() {
         justifyContent: "center",
         bgcolor: "background.default",
         p: 2,
+        position: "relative",
       }}
     >
+      <Box sx={{ position: "absolute", top: 16, right: 16 }}>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={langValue}
+          onChange={(_, v) => {
+            if (v === "en" || v === "zh") setAppLanguage(v);
+          }}
+        >
+          <ToggleButton value="en">{t("layout.langEn")}</ToggleButton>
+          <ToggleButton value="zh">{t("layout.langZh")}</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -54,7 +75,7 @@ export function LoginPage() {
           AIOrcTest
         </Typography>
         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-          Sign in to your account
+          {t("auth.signInTitle")}
         </Typography>
 
         {error && (
@@ -64,7 +85,7 @@ export function LoginPage() {
         )}
 
         <TextField
-          label="Email"
+          label={t("common.email")}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -72,10 +93,10 @@ export function LoginPage() {
           fullWidth
           margin="normal"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("auth.emailPlaceholder")}
         />
         <TextField
-          label="Password"
+          label={t("common.password")}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -95,13 +116,13 @@ export function LoginPage() {
           disabled={isLoading}
           sx={{ mt: 3 }}
         >
-          {isLoading ? "Signing in…" : "Sign In"}
+          {isLoading ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
 
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          Don&apos;t have an account?{" "}
+          {t("auth.noAccount")}{" "}
           <MuiLink component={RouterLink} to="/register" fontWeight={600} underline="hover">
-            Register
+            {t("auth.register")}
           </MuiLink>
         </Typography>
       </Paper>

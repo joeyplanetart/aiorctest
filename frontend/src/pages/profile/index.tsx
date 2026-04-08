@@ -10,12 +10,14 @@ import {
   Typography,
 } from "@mui/material";
 import { useGetIdentity } from "@refinedev/core";
+import { useTranslation } from "react-i18next";
 import { getToken } from "@/providers/authProvider";
 import type { UserProfile } from "@/types/auth";
 
 const API = "/api/auth";
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const { data: identity, refetch } = useGetIdentity<UserProfile>();
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -49,11 +51,11 @@ export function ProfilePage() {
       }),
     });
     if (res.ok) {
-      setMsg("Profile updated");
+      setMsg(t("profile.updated"));
       refetch();
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Update failed");
+      setError(d.detail || t("profile.updateFailed"));
     }
   };
 
@@ -70,19 +72,19 @@ export function ProfilePage() {
       }),
     });
     if (res.ok || res.status === 204) {
-      setMsg("Password changed");
+      setMsg(t("profile.passwordChanged"));
       setOldPassword("");
       setNewPassword("");
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "Password change failed");
+      setError(d.detail || t("profile.passwordChangeFailed"));
     }
   };
 
   if (!identity) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography>Loading…</Typography>
+        <Typography>{t("common.loading")}</Typography>
       </Box>
     );
   }
@@ -90,7 +92,7 @@ export function ProfilePage() {
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, flex: 1, maxWidth: 560 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        My profile
+        {t("profile.title")}
       </Typography>
 
       {msg && (
@@ -107,19 +109,19 @@ export function ProfilePage() {
       <Card sx={{ mb: 3 }}>
         <CardContent component="form" onSubmit={handleProfileSave}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Personal information
+            {t("common.personalInfo")}
           </Typography>
           <Stack spacing={2}>
-            <TextField label="Email" value={identity.email} disabled fullWidth size="small" />
+            <TextField label={t("common.email")} value={identity.email} disabled fullWidth size="small" />
             <TextField
-              label="Display name"
+              label={t("common.displayName")}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               fullWidth
               size="small"
             />
             <TextField
-              label="Avatar URL"
+              label={t("common.avatarUrl")}
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               fullWidth
@@ -127,7 +129,7 @@ export function ProfilePage() {
               placeholder="https://…"
             />
             <Button type="submit" variant="contained" sx={{ alignSelf: "flex-start" }}>
-              Save changes
+              {t("common.saveChanges")}
             </Button>
           </Stack>
         </CardContent>
@@ -136,11 +138,11 @@ export function ProfilePage() {
       <Card>
         <CardContent component="form" onSubmit={handlePasswordChange}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Change password
+            {t("common.changePassword")}
           </Typography>
           <Stack spacing={2}>
             <TextField
-              label="Current password"
+              label={t("common.currentPassword")}
               type="password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
@@ -149,7 +151,7 @@ export function ProfilePage() {
               size="small"
             />
             <TextField
-              label="New password"
+              label={t("common.newPassword")}
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -159,7 +161,7 @@ export function ProfilePage() {
               inputProps={{ minLength: 6 }}
             />
             <Button type="submit" variant="contained" color="secondary" sx={{ alignSelf: "flex-start" }}>
-              Update password
+              {t("common.updatePassword")}
             </Button>
           </Stack>
         </CardContent>

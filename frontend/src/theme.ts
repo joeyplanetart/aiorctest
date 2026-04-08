@@ -1,6 +1,8 @@
 import { createTheme, alpha } from "@mui/material/styles";
+import { zhCN } from "@mui/material/locale";
+import type { ThemeOptions } from "@mui/material/styles";
 
-export const hrTheme = createTheme({
+const hrThemeOptions: ThemeOptions = {
   palette: {
     mode: "light",
     primary: {
@@ -26,7 +28,7 @@ export const hrTheme = createTheme({
   },
   typography: {
     fontFamily:
-      '"Inter", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif',
+      '"Inter", "Roboto", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif',
     h4: { fontWeight: 700, letterSpacing: "-0.02em" },
     h5: { fontWeight: 700 },
     h6: { fontWeight: 600 },
@@ -57,4 +59,15 @@ export const hrTheme = createTheme({
       },
     },
   },
-});
+};
+
+/** Base theme (English / default MUI strings). */
+export const hrTheme = createTheme(hrThemeOptions);
+
+/** Theme with optional MUI component locale (e.g. Chinese). */
+export function createHrTheme(language: string) {
+  if (language.startsWith("zh")) {
+    return createTheme(hrThemeOptions, zhCN);
+  }
+  return createTheme(hrThemeOptions);
+}

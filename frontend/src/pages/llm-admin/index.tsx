@@ -42,6 +42,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { Trans, useTranslation } from "react-i18next";
 import { getToken } from "@/providers/authProvider";
 
 function headers(): Record<string, string> {
@@ -105,11 +106,8 @@ function formatTokens(n: number) {
   return String(n);
 }
 
-function daysLabel(d: number) {
-  return d >= 365 ? "1 year" : `${d} days`;
-}
-
 export function LlmAdminPage() {
+  const { t, i18n } = useTranslation();
   const [config, setConfig] = useState<LlmConfig | null>(null);
   const [selectedModel, setSelectedModel] = useState("");
   const [customModel, setCustomModel] = useState("");
@@ -125,6 +123,11 @@ export function LlmAdminPage() {
   const [summary, setSummary] = useState<UsageSummary | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsDays, setStatsDays] = useState(30);
+
+  const dateLocale = i18n.language.startsWith("zh") ? "zh-CN" : undefined;
+
+  const daysLabel = (d: number) =>
+    d >= 365 ? t("llm.oneYear") : t("llm.nDays", { n: d });
 
   const loadConfig = useCallback(async () => {
     try {
@@ -171,7 +174,10 @@ export function LlmAdminPage() {
 
   const handleSaveConfig = async () => {
     const modelName = selectedModel === "custom" ? customModel.trim() : selectedModel;
-    if (!modelName) { setError("Please select or enter a model name"); return; }
+    if (!modelName) {
+      setError(t("llm.selectModelError"));
+      return;
+    }
     setConfigSaving(true);
     setConfigMsg("");
     setError("");
@@ -184,81 +190,82 @@ export function LlmAdminPage() {
       if (res.ok) {
         const data: LlmConfig = await res.json();
         setConfig(data);
-        setConfigMsg("Model configuration saved");
+        setConfigMsg(t("llm.configSaved"));
       } else {
         const d = await res.json().catch(() => ({}));
-        setError(d.detail || "Save failed");
+        setError(d.detail || t("llm.saveFailed"));
       }
-    } catch { setError("Network error"); }
+    } catch {
+      setError(t("common.networkError"));
+    }
     setConfigSaving(false);
   };
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
-      {/* Header */}
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Box>
-          <Typography variant="h4">LLM Management</Typography>
+          <Typography variant="h4">{t("llm.title")}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }}>
-            Configure the LLM model used by AI orchestration, and review token consumption records and trend charts.
+            {t("llm.subtitle")}
           </Typography>
         </Box>
       </Stack>
 
       {error && <Typography color="error" sx={{ mb: 2 }} variant="body2">{error}</Typography>}
 
-      {/* Summary stat cards */}
       <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <Card sx={{ flex: 1, bgcolor: (t) => alpha(t.palette.primary.main, 0.1), border: "none" }}>
+        <Card sx={{ flex: 1, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Active model
+              {t("llm.activeModel")}
             </Typography>
             <Typography variant="h3" fontWeight={800} color="primary.dark" noWrap>
               {config?.model_name ?? "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Current LLM model
+              {t("llm.currentLlmModel")}
             </Typography>
           </CardContent>
         </Card>
-        <Card sx={{ flex: 1, bgcolor: (t) => alpha("#e8a87c", 0.25), border: "none" }}>
+        <Card sx={{ flex: 1, bgcolor: (theme) => alpha("#e8a87c", 0.25), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Total calls
+              {t("llm.totalCalls")}
             </Typography>
             <Typography variant="h3" fontWeight={800} sx={{ color: "#b45309" }}>
               {summary?.total_calls ?? "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Last {daysLabel(statsDays)}
+              {t("llm.lastDays", { label: daysLabel(statsDays) })}
             </Typography>
           </CardContent>
         </Card>
-        <Card sx={{ flex: 1, bgcolor: (t) => alpha(t.palette.success.main, 0.08), border: "none" }}>
+        <Card sx={{ flex: 1, bgcolor: (theme) => alpha(theme.palette.success.main, 0.08), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Token usage
+              {t("llm.tokenUsage")}
             </Typography>
             <Typography variant="h3" fontWeight={800} color="success.dark">
               {summary ? formatTokens(summary.total_tokens) : "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Prompt {summary ? formatTokens(summary.total_prompt_tokens) : "—"} / Completion {summary ? formatTokens(summary.total_completion_tokens) : "—"}
+              {t("llm.promptCompletionShort", {
+                p: summary ? formatTokens(summary.total_prompt_tokens) : "—",
+                c: summary ? formatTokens(summary.total_completion_tokens) : "—",
+              })}
             </Typography>
           </CardContent>
         </Card>
       </Stack>
 
-      {/* Content: left = model config, right = chart & records */}
       <Stack direction={{ xs: "column", lg: "row" }} spacing={3} alignItems="stretch">
-        {/* Left: Model config */}
         <Card sx={{ width: { xs: "100%", lg: 340 }, flexShrink: 0 }}>
           <CardContent>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <SmartToyOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700}>
-                Model configuration
+                {t("llm.modelConfig")}
               </Typography>
             </Stack>
 
@@ -266,16 +273,17 @@ export function LlmAdminPage() {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                 <CheckCircleIcon sx={{ color: "success.main", fontSize: 16 }} />
                 <Typography variant="caption" fontWeight={600}>
-                  Active: <Chip label={config.model_name} size="small" sx={{ fontWeight: 700, ml: 0.5, height: 22, fontSize: 11 }} />
+                  {t("llm.activePrefix")}{" "}
+                  <Chip label={config.model_name} size="small" sx={{ fontWeight: 700, ml: 0.5, height: 22, fontSize: 11 }} />
                 </Typography>
               </Stack>
             )}
 
             <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-              <InputLabel>Select model</InputLabel>
+              <InputLabel>{t("llm.selectModel")}</InputLabel>
               <Select
                 value={selectedModel}
-                label="Select model"
+                label={t("llm.selectModel")}
                 onChange={(e) => {
                   setSelectedModel(e.target.value);
                   if (e.target.value !== "custom") setCustomModel("");
@@ -285,7 +293,7 @@ export function LlmAdminPage() {
                   <MenuItem key={m} value={m}>{m}</MenuItem>
                 ))}
                 <Divider />
-                <MenuItem value="custom">Custom model...</MenuItem>
+                <MenuItem value="custom">{t("llm.customModel")}</MenuItem>
               </Select>
             </FormControl>
 
@@ -293,8 +301,8 @@ export function LlmAdminPage() {
               <TextField
                 fullWidth
                 size="small"
-                label="Model name"
-                placeholder="e.g. openai/gpt-4o-mini"
+                label={t("llm.modelName")}
+                placeholder={t("llm.modelNamePlaceholder")}
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
                 sx={{ mb: 2 }}
@@ -309,7 +317,7 @@ export function LlmAdminPage() {
               onClick={handleSaveConfig}
               disabled={configSaving}
             >
-              {configSaving ? "Saving…" : "Save configuration"}
+              {configSaving ? t("common.saving") : t("llm.saveConfiguration")}
             </Button>
 
             {configMsg && <Alert severity="success" sx={{ mt: 2 }}>{configMsg}</Alert>}
@@ -317,20 +325,17 @@ export function LlmAdminPage() {
             <Divider sx={{ my: 2.5 }} />
 
             <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.6 }}>
-              API Base URL and API Key are configured via backend environment variables <strong>OPENAI_API_BASE</strong> and <strong>OPENAI_API_KEY</strong>.
-              Supports OpenAI, OpenRouter, and other compatible APIs.
+              <Trans i18nKey="llm.envHint" components={{ 0: <strong /> }} />
             </Typography>
           </CardContent>
         </Card>
 
-        {/* Right: Charts + Records */}
         <Card sx={{ flex: 1, minWidth: 0 }}>
           <CardContent>
-            {/* Charts section */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
               <BarChartOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-                Usage trends
+                {t("llm.usageTrends")}
               </Typography>
               <FormControl size="small" sx={{ minWidth: 100 }}>
                 <Select
@@ -339,10 +344,10 @@ export function LlmAdminPage() {
                   size="small"
                   sx={{ fontSize: 12 }}
                 >
-                  <MenuItem value={7} sx={{ fontSize: 12 }}>Last 7 days</MenuItem>
-                  <MenuItem value={14} sx={{ fontSize: 12 }}>Last 14 days</MenuItem>
-                  <MenuItem value={30} sx={{ fontSize: 12 }}>Last 30 days</MenuItem>
-                  <MenuItem value={90} sx={{ fontSize: 12 }}>Last 90 days</MenuItem>
+                  <MenuItem value={7} sx={{ fontSize: 12 }}>{t("llm.last7")}</MenuItem>
+                  <MenuItem value={14} sx={{ fontSize: 12 }}>{t("llm.last14")}</MenuItem>
+                  <MenuItem value={30} sx={{ fontSize: 12 }}>{t("llm.last30")}</MenuItem>
+                  <MenuItem value={90} sx={{ fontSize: 12 }}>{t("llm.last90")}</MenuItem>
                 </Select>
               </FormControl>
               {statsLoading && <CircularProgress size={16} />}
@@ -352,7 +357,7 @@ export function LlmAdminPage() {
               <>
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block" }}>
-                    Token consumption
+                    {t("llm.tokenConsumption")}
                   </Typography>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={stats} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -360,13 +365,13 @@ export function LlmAdminPage() {
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
                       <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => formatTokens(v)} />
                       <RechartsTooltip
-                        formatter={(value: number, name: string) => [
-                          value.toLocaleString(),
-                          name === "prompt_tokens" ? "Prompt" : "Completion",
+                        formatter={(value, name) => [
+                          Number(value ?? 0).toLocaleString(dateLocale),
+                          name === "prompt_tokens" ? t("common.prompt") : t("common.completion"),
                         ]}
-                        labelFormatter={(label: string) => `Date: ${label}`}
+                        labelFormatter={(label) => `${t("common.date")}: ${String(label ?? "")}`}
                       />
-                      <Legend formatter={(v: string) => (v === "prompt_tokens" ? "Prompt" : "Completion")} />
+                      <Legend formatter={(v: string) => (v === "prompt_tokens" ? t("common.prompt") : t("common.completion"))} />
                       <Bar dataKey="prompt_tokens" stackId="a" fill="#1976d2" />
                       <Bar dataKey="completion_tokens" stackId="a" fill="#90caf9" radius={[3, 3, 0, 0]} />
                     </BarChart>
@@ -375,7 +380,7 @@ export function LlmAdminPage() {
 
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block" }}>
-                    Call count
+                    {t("llm.callCount")}
                   </Typography>
                   <ResponsiveContainer width="100%" height={160}>
                     <AreaChart data={stats} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -383,8 +388,8 @@ export function LlmAdminPage() {
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                       <RechartsTooltip
-                        formatter={(value: number) => [value, "Calls"]}
-                        labelFormatter={(label: string) => `Date: ${label}`}
+                        formatter={(value) => [Number(value ?? 0), t("common.calls")]}
+                        labelFormatter={(label) => `${t("common.date")}: ${String(label ?? "")}`}
                       />
                       <Area type="monotone" dataKey="count" stroke="#1976d2" fill="#bbdefb" strokeWidth={2} />
                     </AreaChart>
@@ -394,18 +399,17 @@ export function LlmAdminPage() {
             ) : (
               !statsLoading && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
-                  No usage data yet. Trend charts will appear after using AI orchestration.
+                  {t("llm.noUsageData")}
                 </Typography>
               )
             )}
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Records section */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <ListAltOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-                Usage records
+                {t("llm.usageRecords")}
               </Typography>
               <FormControl size="small" sx={{ minWidth: 100 }}>
                 <Select
@@ -414,10 +418,10 @@ export function LlmAdminPage() {
                   size="small"
                   sx={{ fontSize: 12 }}
                 >
-                  <MenuItem value={7} sx={{ fontSize: 12 }}>Last 7 days</MenuItem>
-                  <MenuItem value={30} sx={{ fontSize: 12 }}>Last 30 days</MenuItem>
-                  <MenuItem value={90} sx={{ fontSize: 12 }}>Last 90 days</MenuItem>
-                  <MenuItem value={365} sx={{ fontSize: 12 }}>Last year</MenuItem>
+                  <MenuItem value={7} sx={{ fontSize: 12 }}>{t("llm.last7")}</MenuItem>
+                  <MenuItem value={30} sx={{ fontSize: 12 }}>{t("llm.last30")}</MenuItem>
+                  <MenuItem value={90} sx={{ fontSize: 12 }}>{t("llm.last90")}</MenuItem>
+                  <MenuItem value={365} sx={{ fontSize: 12 }}>{t("llm.lastYear")}</MenuItem>
                 </Select>
               </FormControl>
               <Button
@@ -429,7 +433,7 @@ export function LlmAdminPage() {
                 startIcon={recordsLoading ? <CircularProgress size={14} /> : <RefreshOutlinedIcon sx={{ fontSize: 16 }} />}
                 sx={{ textTransform: "none", fontSize: 12, minWidth: 0, px: 1.5 }}
               >
-                Refresh
+                {t("common.refresh")}
               </Button>
             </Stack>
 
@@ -438,21 +442,21 @@ export function LlmAdminPage() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Time</TableCell>
-                      <TableCell>Model</TableCell>
-                      <TableCell>User</TableCell>
-                      <TableCell>Project</TableCell>
-                      <TableCell align="right">Prompt</TableCell>
-                      <TableCell align="right">Completion</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                      <TableCell>Summary</TableCell>
+                      <TableCell>{t("common.time")}</TableCell>
+                      <TableCell>{t("common.model")}</TableCell>
+                      <TableCell>{t("llm.tableUser")}</TableCell>
+                      <TableCell>{t("llm.tableProject")}</TableCell>
+                      <TableCell align="right">{t("common.prompt")}</TableCell>
+                      <TableCell align="right">{t("common.completion")}</TableCell>
+                      <TableCell align="right">{t("common.total")}</TableCell>
+                      <TableCell>{t("common.summary")}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {records.map((r) => (
                       <TableRow key={r.id} hover>
                         <TableCell sx={{ whiteSpace: "nowrap", fontSize: 12 }}>
-                          {new Date(r.created_at).toLocaleString("en-US", {
+                          {new Date(r.created_at).toLocaleString(dateLocale, {
                             month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit",
                           })}
                         </TableCell>
@@ -472,13 +476,13 @@ export function LlmAdminPage() {
                           </Tooltip>
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 12, fontFamily: "monospace" }}>
-                          {r.prompt_tokens.toLocaleString()}
+                          {r.prompt_tokens.toLocaleString(dateLocale)}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 12, fontFamily: "monospace" }}>
-                          {r.completion_tokens.toLocaleString()}
+                          {r.completion_tokens.toLocaleString(dateLocale)}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700 }}>
-                          {r.total_tokens.toLocaleString()}
+                          {r.total_tokens.toLocaleString(dateLocale)}
                         </TableCell>
                         <TableCell sx={{ fontSize: 11, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           <Tooltip title={r.prompt_summary || ""}>
@@ -493,7 +497,7 @@ export function LlmAdminPage() {
             ) : (
               !recordsLoading && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
-                  No usage records yet. Records will appear after using AI orchestration.
+                  {t("llm.noRecords")}
                 </Typography>
               )
             )}

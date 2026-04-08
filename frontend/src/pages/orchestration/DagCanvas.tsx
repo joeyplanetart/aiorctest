@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useImperativeHandle, type MouseEvent as DomMouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ReactFlow,
   Background,
@@ -74,6 +75,7 @@ const Canvas = forwardRef<DagCanvasHandle, CanvasProps>(function Canvas(
   { nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeDragStop, onNodeClick },
   ref,
 ) {
+  const { t } = useTranslation();
   const hasNodes = nodes.length > 0;
   const hasEdges = edges.length > 0;
 
@@ -88,15 +90,15 @@ const Canvas = forwardRef<DagCanvasHandle, CanvasProps>(function Canvas(
     <Box sx={{ py: 0.25, maxWidth: 300 }}>
       {nodes.length >= 2 && !hasEdges && (
         <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5, mb: 0.75 }}>
-          <strong>Connect:</strong> Drag from a node's <strong>bottom</strong> handle to another node's <strong>top</strong> handle.
+          {t("orch.canvasHelpConnect")}
         </Typography>
       )}
       <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5, mb: hasEdges ? 0.75 : 0 }}>
-        <strong>Edit node:</strong> Click a node to open Overrides / Extracts on the right; click "Save" in the toolbar when done.
+        {t("orch.canvasHelpEdit")}
       </Typography>
       {hasEdges && (
         <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5 }}>
-          <strong>Remove connection:</strong> Select an edge and press Delete / Backspace, or <strong>double-click</strong> the edge to remove it.
+          {t("orch.canvasHelpRemoveEdge")}
         </Typography>
       )}
     </Box>
@@ -125,7 +127,7 @@ const Canvas = forwardRef<DagCanvasHandle, CanvasProps>(function Canvas(
         >
           <IconButton
             size="small"
-            aria-label="Canvas help"
+            aria-label={t("orch.canvasHelpAria")}
             sx={{
               position: "absolute",
               top: 12,
