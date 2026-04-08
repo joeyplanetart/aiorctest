@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIOrcTest — AI 驱动的 API 编排测试平台</title>
+    <meta name="description" content="用 AI 替代手工串接测试脚本。可视化 DAG 编排，自然语言生成场景，支持断言、变量传递与多环境切换。" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+
+    <!-- ─── NAVBAR ─────────────────────────────────────── -->
+    <header class="navbar" id="navbar">
+      <div class="container navbar__inner">
+        <a class="navbar__brand" href="#">
+          <svg class="navbar__logo" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="10" fill="#1b9a8e"/>
+            <path d="M9 18h4l3-7 4 14 3-9 2 2h4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="navbar__name">AIOrcTest</span>
+        </a>
+
+        <nav class="navbar__links" id="nav-links">
+          <a href="#features">功能特性</a>
+          <a href="#howit">工作原理</a>
+          <a href="#quickstart">快速开始</a>
+          <a href="#docs">文档</a>
+        </nav>
+
+        <div class="navbar__actions">
+          <a class="btn btn--ghost btn--sm" href="https://github.com" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            GitHub
+          </a>
+          <a class="btn btn--primary btn--sm" href="#quickstart">免费部署</a>
+        </div>
+
+        <button class="navbar__hamburger" id="hamburger" aria-label="菜单">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── HERO ───────────────────────────────────────── -->
+    <section class="hero">
+      <div class="hero__bg-grid"></div>
+      <div class="hero__glow hero__glow--1"></div>
+      <div class="hero__glow hero__glow--2"></div>
+
+      <div class="container hero__inner">
+        <div class="hero__badge">
+          <span class="badge badge--teal">✨ AI 驱动</span>
+          <span class="badge badge--outline">开源免费</span>
+        </div>
+
+        <h1 class="hero__title">
+          告别手写测试脚本<br/>
+          <span class="gradient-text">用 AI 编排你的 API 测试</span>
+        </h1>
+
+        <p class="hero__desc">
+          AIOrcTest 让 QA 工程师用<strong>拖拽画布</strong>组合多步接口测试，<br class="br-md"/>
+          用<strong>自然语言</strong>生成完整测试场景，支持变量传递、断言校验与多环境切换。
+        </p>
+
+        <div class="hero__cta">
+          <a class="btn btn--primary btn--lg" href="#quickstart">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            5 分钟快速部署
+          </a>
+          <a class="btn btn--secondary btn--lg" href="#features">了解功能 →</a>
+        </div>
+
+        <div class="hero__stats">
+          <div class="hero__stat">
+            <span class="stat-num">6+</span>
+            <span class="stat-label">核心功能模块</span>
+          </div>
+          <div class="hero__stat-divider"></div>
+          <div class="hero__stat">
+            <span class="stat-num">多环境</span>
+            <span class="stat-label">stage / pre / prod</span>
+          </div>
+          <div class="hero__stat-divider"></div>
+          <div class="hero__stat">
+            <span class="stat-num">RAG</span>
+            <span class="stat-label">知识库增强</span>
+          </div>
+        </div>
+
+        <!-- Browser mockup -->
+        <div class="hero__mockup" aria-hidden="true">
+          <div class="mockup-browser">
+            <div class="mockup-browser__bar">
+              <div class="mockup-dots">
+                <span class="dot dot--red"></span>
+                <span class="dot dot--yellow"></span>
+                <span class="dot dot--green"></span>
+              </div>
+              <div class="mockup-url">localhost:5173 · API 编排</div>
+            </div>
+            <div class="mockup-browser__body">
+              <!-- DAG Canvas mockup -->
+              <div class="dag-mock">
+                <div class="dag-sidebar">
+                  <div class="dag-sidebar__item active">场景列表</div>
+                  <div class="dag-sidebar__item">注册登录流程</div>
+                  <div class="dag-sidebar__item">CRUD 验证</div>
+                  <div class="dag-sidebar__item">权限测试</div>
+                </div>
+                <div class="dag-canvas">
+                  <!-- Nodes -->
+                  <div class="dag-node dag-node--start" style="top:30px;left:40px">
+                    <div class="dag-node__method post">POST</div>
+                    <div class="dag-node__name">用户注册</div>
+                    <div class="dag-node__status ok">✓ 201</div>
+                  </div>
+                  <div class="dag-edge dag-edge--h" style="top:58px;left:188px;width:60px"></div>
+                  <div class="dag-node" style="top:30px;left:248px">
+                    <div class="dag-node__method post">POST</div>
+                    <div class="dag-node__name">用户登录</div>
+                    <div class="dag-node__status ok">✓ 200</div>
+                  </div>
+                  <div class="dag-edge dag-edge--h" style="top:58px;left:396px;width:60px"></div>
+                  <div class="dag-node" style="top:30px;left:456px">
+                    <div class="dag-node__method get">GET</div>
+                    <div class="dag-node__name">获取资料</div>
+                    <div class="dag-node__status ok">✓ 200</div>
+                  </div>
+                  <div class="dag-node" style="top:130px;left:248px">
+                    <div class="dag-node__method del">DELETE</div>
+                    <div class="dag-node__name">清理测试账户</div>
+                    <div class="dag-node__status ok">✓ 204</div>
+                  </div>
+                  <div class="dag-edge dag-edge--v" style="top:88px;left:312px;height:42px"></div>
+
+                  <!-- Toolbar -->
+                  <div class="dag-toolbar">
+                    <button class="dag-toolbar__btn dag-toolbar__btn--run">▶ 运行</button>
+                    <button class="dag-toolbar__btn">AI 生成</button>
+                    <button class="dag-toolbar__btn">保存</button>
+                    <span class="dag-toolbar__env">环境: stage</span>
+                  </div>
+
+                  <!-- Result panel -->
+                  <div class="dag-result">
+                    <div class="dag-result__title">运行结果 <span class="result-pass">4/4 通过</span></div>
+                    <div class="dag-result__item"><span class="pass-dot"></span>用户注册 · 234ms</div>
+                    <div class="dag-result__item"><span class="pass-dot"></span>用户登录 · 89ms</div>
+                    <div class="dag-result__item"><span class="pass-dot"></span>获取资料 · 45ms</div>
+                    <div class="dag-result__item"><span class="pass-dot"></span>清理账户 · 67ms</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── LOGO BAR ───────────────────────────────────── -->
+    <section class="logobar">
+      <div class="container">
+        <p class="logobar__label">兼容主流 AI 模型服务</p>
+        <div class="logobar__row">
+          <div class="logobar__item">OpenAI</div>
+          <div class="logobar__divider"></div>
+          <div class="logobar__item">OpenRouter</div>
+          <div class="logobar__divider"></div>
+          <div class="logobar__item">Azure OpenAI</div>
+          <div class="logobar__divider"></div>
+          <div class="logobar__item">本地 Ollama</div>
+          <div class="logobar__divider"></div>
+          <div class="logobar__item">任意 OpenAI 兼容接口</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FEATURES ───────────────────────────────────── -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">功能特性</span>
+          <h2 class="section-title">一站式 AI 增强 API 测试</h2>
+          <p class="section-desc">从接口管理到场景编排，从 AI 生成到结果断言，覆盖完整测试生命周期。</p>
+        </div>
+
+        <div class="features-grid">
+
+          <div class="feature-card feature-card--highlight">
+            <div class="feature-card__icon icon--teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="19" r="2"/><line x1="7" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="17" y2="12"/><line x1="12" y1="7" x2="12" y2="10"/><line x1="12" y1="14" x2="12" y2="17"/></svg>
+            </div>
+            <h3>DAG 可视化编排</h3>
+            <p>拖拽节点、连线组合多个 API 调用，系统自动按拓扑顺序执行，支持变量在节点间自动传递。</p>
+            <ul class="feature-list">
+              <li>XYFlow 流程图画布</li>
+              <li>节点间 JSONPath 数据映射</li>
+              <li>拓扑排序自动执行</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon icon--purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v6h6"/></svg>
+            </div>
+            <h3>AI 场景智能生成</h3>
+            <p>用自然语言描述测试需求，AI 从项目 API 库中自动选择接口、配置参数、设置断言，生成完整测试流。</p>
+            <ul class="feature-list">
+              <li>自然语言 → DAG 场景</li>
+              <li>自动选择相关接口</li>
+              <li>支持微调后保存</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon icon--blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>
+            </div>
+            <h3>完整 API 管理</h3>
+            <p>层级文件夹组织接口，支持 cURL 和 OpenAPI 批量导入，内置调试面板与响应断言配置。</p>
+            <ul class="feature-list">
+              <li>cURL / OpenAPI 导入</li>
+              <li>JSONPath 断言规则</li>
+              <li>响应变量提取</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon icon--orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.657-4.03 3-9 3s-9-1.343-9-3"/><path d="M3 5v14c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/></svg>
+            </div>
+            <h3>RAG 知识库</h3>
+            <p>上传接口文档后，AI 可检索文档上下文辅助生成测试场景，让 AI 更理解你的业务逻辑。</p>
+            <ul class="feature-list">
+              <li>ChromaDB 向量检索</li>
+              <li>自动文本分块入库</li>
+              <li>增强 AI 生成准确性</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon icon--green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <h3>多项目多环境</h3>
+            <p>项目级资源隔离，自动为每个项目创建 stage / pre / prod 三套环境，变量按环境独立管理。</p>
+            <ul class="feature-list">
+              <li>角色权限（owner/editor/viewer）</li>
+              <li>环境变量 {{插值}} 支持</li>
+              <li>成员管理</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card__icon icon--teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3>LLM 用量统计</h3>
+            <p>统一配置 AI 模型，实时追踪 Token 消耗趋势，按功能模块统计调用次数与成本。</p>
+            <ul class="feature-list">
+              <li>Recharts 用量趋势图</li>
+              <li>按来源分类统计</li>
+              <li>支持多模型切换</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── HOW IT WORKS ────────────────────────────────── -->
+    <section class="section section--alt" id="howit">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">工作原理</span>
+          <h2 class="section-title">三步完成 AI 编排测试</h2>
+          <p class="section-desc">从接口导入到场景运行，最快 5 分钟搭建完整测试链路。</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step__num">01</div>
+            <div class="step__content">
+              <h3>导入你的 API</h3>
+              <p>粘贴 cURL 命令或 OpenAPI JSON，批量导入项目接口。支持层级文件夹管理，配置环境变量替换域名。</p>
+              <div class="code-block">
+                <div class="code-block__header">
+                  <span class="code-lang">bash</span>
+                </div>
+                <pre><code><span class="c"># 支持直接粘贴 cURL</span>
+curl -X POST 'https://api.example.com/login' \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@example.com"}'
+
+<span class="c"># 或上传 OpenAPI / Swagger JSON</span></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step__num">02</div>
+            <div class="step__content">
+              <h3>AI 生成或手动编排场景</h3>
+              <p>用自然语言描述测试场景，AI 自动生成 DAG 节点与连线。也可在画布上拖拽手动搭建，配置变量提取与断言。</p>
+              <div class="ai-demo">
+                <div class="ai-demo__prompt">
+                  <div class="ai-demo__icon">✨</div>
+                  <div class="ai-demo__text">"测试注册 → 登录 → 获取个人资料流程，注册使用唯一邮箱，登录后提取 token 给后续接口使用"</div>
+                </div>
+                <div class="ai-demo__arrow">↓ AI 生成</div>
+                <div class="ai-demo__result">
+                  <span class="dag-chip">POST /register</span>
+                  <span class="dag-arrow">→</span>
+                  <span class="dag-chip">POST /login</span>
+                  <span class="dag-arrow">→</span>
+                  <span class="dag-chip">GET /profile</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step__num">03</div>
+            <div class="step__content">
+              <h3>一键运行，查看详细结果</h3>
+              <p>选择运行环境，一键执行整个场景。查看每个节点的请求详情、响应内容和断言通过情况。</p>
+              <div class="result-demo">
+                <div class="result-row result-row--pass">
+                  <span class="result-icon">✓</span>
+                  <span class="result-name">POST /register</span>
+                  <span class="result-code">201</span>
+                  <span class="result-time">234ms</span>
+                </div>
+                <div class="result-row result-row--pass">
+                  <span class="result-icon">✓</span>
+                  <span class="result-name">POST /login</span>
+                  <span class="result-code">200</span>
+                  <span class="result-time">89ms</span>
+                </div>
+                <div class="result-row result-row--pass">
+                  <span class="result-icon">✓</span>
+                  <span class="result-name">GET /profile</span>
+                  <span class="result-code">200</span>
+                  <span class="result-time">45ms</span>
+                </div>
+                <div class="result-summary">3/3 断言通过 · 总耗时 368ms</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── ARCHITECTURE ───────────────────────────────── -->
+    <section class="section" id="arch">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">技术架构</span>
+          <h2 class="section-title">现代化开放技术栈</h2>
+          <p class="section-desc">前后端分离，开箱即用 SQLite，可无缝切换 PostgreSQL 与 Docker 部署。</p>
+        </div>
+
+        <div class="arch-grid">
+          <div class="arch-layer">
+            <div class="arch-layer__label">前端</div>
+            <div class="arch-layer__chips">
+              <span class="chip chip--blue">React 18</span>
+              <span class="chip chip--blue">TypeScript</span>
+              <span class="chip chip--blue">MUI 7</span>
+              <span class="chip chip--blue">XYFlow</span>
+              <span class="chip chip--blue">Refine 4</span>
+              <span class="chip chip--blue">Vite 6</span>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="arch-layer__label">后端 API</div>
+            <div class="arch-layer__chips">
+              <span class="chip chip--teal">FastAPI</span>
+              <span class="chip chip--teal">Python 3.10+</span>
+              <span class="chip chip--teal">SQLAlchemy 2</span>
+              <span class="chip chip--teal">Pydantic v2</span>
+              <span class="chip chip--teal">JWT Auth</span>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="arch-layer__label">AI / 数据</div>
+            <div class="arch-layer__chips">
+              <span class="chip chip--purple">LangChain</span>
+              <span class="chip chip--purple">ChromaDB</span>
+              <span class="chip chip--purple">OpenAI API</span>
+              <span class="chip chip--orange">SQLite / PostgreSQL</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-features">
+          <div class="arch-feat">
+            <span class="arch-feat__icon">🔒</span>
+            <div>
+              <strong>JWT 认证</strong>
+              <p>HS256 签名，角色权限三级控制</p>
+            </div>
+          </div>
+          <div class="arch-feat">
+            <span class="arch-feat__icon">🐳</span>
+            <div>
+              <strong>Docker 就绪</strong>
+              <p>docker-compose 一键启动</p>
+            </div>
+          </div>
+          <div class="arch-feat">
+            <span class="arch-feat__icon">🌐</span>
+            <div>
+              <strong>兼容多模型</strong>
+              <p>OpenAI / OpenRouter / Azure / Ollama</p>
+            </div>
+          </div>
+          <div class="arch-feat">
+            <span class="arch-feat__icon">🌍</span>
+            <div>
+              <strong>中英文 UI</strong>
+              <p>i18next 国际化，可扩展更多语言</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── QUICK START ─────────────────────────────────── -->
+    <section class="section section--alt" id="quickstart">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">快速开始</span>
+          <h2 class="section-title">5 分钟本地跑起来</h2>
+          <p class="section-desc">无需复杂配置，一键启动脚本自动处理依赖安装与端口管理。</p>
+        </div>
+
+        <div class="quickstart-tabs" id="qs-tabs">
+          <div class="qs-tab-btns">
+            <button class="qs-tab-btn active" data-tab="local">本地开发</button>
+            <button class="qs-tab-btn" data-tab="docker">Docker</button>
+          </div>
+
+          <div class="qs-tab-panel active" id="qs-local">
+            <div class="qs-steps">
+              <div class="qs-step">
+                <div class="qs-step__num">1</div>
+                <div class="qs-step__body">
+                  <div class="qs-step__title">克隆并配置环境变量</div>
+                  <div class="code-block">
+                    <div class="code-block__header">
+                      <span class="code-lang">bash</span>
+                      <button class="copy-btn" data-target="step1">复制</button>
+                    </div>
+                    <pre id="step1"><code>git clone &lt;repo-url&gt; AIOrcTest &amp;&amp; cd AIOrcTest
+cp .env.example .env
+<span class="c"># 编辑 .env，填写 OPENAI_API_KEY 和 SECRET_KEY</span></code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qs-step">
+                <div class="qs-step__num">2</div>
+                <div class="qs-step__body">
+                  <div class="qs-step__title">启动后端（自动安装依赖）</div>
+                  <div class="code-block">
+                    <div class="code-block__header">
+                      <span class="code-lang">bash</span>
+                      <button class="copy-btn" data-target="step2">复制</button>
+                    </div>
+                    <pre id="step2"><code>./scripts/start-backend.sh
+<span class="c"># 后端就绪后访问 http://localhost:8000/docs</span></code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qs-step">
+                <div class="qs-step__num">3</div>
+                <div class="qs-step__body">
+                  <div class="qs-step__title">启动前端（新终端）</div>
+                  <div class="code-block">
+                    <div class="code-block__header">
+                      <span class="code-lang">bash</span>
+                      <button class="copy-btn" data-target="step3">复制</button>
+                    </div>
+                    <pre id="step3"><code>./scripts/start-frontend.sh
+<span class="c"># 访问 http://localhost:5173</span></code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qs-tab-panel" id="qs-docker">
+            <div class="qs-steps">
+              <div class="qs-step">
+                <div class="qs-step__num">1</div>
+                <div class="qs-step__body">
+                  <div class="qs-step__title">配置环境变量</div>
+                  <div class="code-block">
+                    <div class="code-block__header">
+                      <span class="code-lang">bash</span>
+                      <button class="copy-btn" data-target="d1">复制</button>
+                    </div>
+                    <pre id="d1"><code>cp .env.example .env
+<span class="c"># 编辑 .env 填写 OPENAI_API_KEY 和 SECRET_KEY</span></code></pre>
+                  </div>
+                </div>
+              </div>
+              <div class="qs-step">
+                <div class="qs-step__num">2</div>
+                <div class="qs-step__body">
+                  <div class="qs-step__title">创建 Dockerfile 并启动</div>
+                  <div class="code-block">
+                    <div class="code-block__header">
+                      <span class="code-lang">bash</span>
+                      <button class="copy-btn" data-target="d2">复制</button>
+                    </div>
+                    <pre id="d2"><code>docker compose up --build -d
+<span class="c"># 后端运行在 http://localhost:8000</span></code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="env-table-wrap">
+          <h3 class="env-table__title">关键环境变量</h3>
+          <table class="env-table">
+            <thead>
+              <tr><th>变量</th><th>必填</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>OPENAI_API_KEY</code></td>
+                <td><span class="required">必填</span></td>
+                <td>OpenAI 或兼容 API 密钥</td>
+              </tr>
+              <tr>
+                <td><code>SECRET_KEY</code></td>
+                <td><span class="required">必填</span></td>
+                <td>JWT 签名密钥（随机 32 字节串）</td>
+              </tr>
+              <tr>
+                <td><code>OPENAI_API_BASE</code></td>
+                <td><span class="optional">可选</span></td>
+                <td>自定义 API 基础 URL（OpenRouter / Azure 等）</td>
+              </tr>
+              <tr>
+                <td><code>DATABASE_URL</code></td>
+                <td><span class="optional">可选</span></td>
+                <td>默认 SQLite，生产可切换 PostgreSQL</td>
+              </tr>
+              <tr>
+                <td><code>BOOTSTRAP_SUPERADMIN_EMAILS</code></td>
+                <td><span class="optional">可选</span></td>
+                <td>启动时自动设为超级管理员的邮箱</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── DOCS ────────────────────────────────────────── -->
+    <section class="section" id="docs">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">文档</span>
+          <h2 class="section-title">完整文档，快速上手</h2>
+          <p class="section-desc">从部署到二次开发，每个环节均有详细指引。</p>
+        </div>
+
+        <div class="docs-grid">
+          <a class="doc-card" href="./docs/architecture.html">
+            <div class="doc-card__icon">🏗️</div>
+            <div>
+              <h3>系统架构</h3>
+              <p>整体架构图、模块说明、数据模型与数据流</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+          <a class="doc-card" href="./docs/user-guide.html">
+            <div class="doc-card__icon">📖</div>
+            <div>
+              <h3>用户使用指南</h3>
+              <p>功能操作演示、DAG 编排、AI 生成详解</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+          <a class="doc-card" href="./docs/deployment.html">
+            <div class="doc-card__icon">🚀</div>
+            <div>
+              <h3>部署指南</h3>
+              <p>本地、Docker、Nginx、PostgreSQL 生产配置</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+          <a class="doc-card" href="./docs/api-reference.html">
+            <div class="doc-card__icon">⚡</div>
+            <div>
+              <h3>API 参考</h3>
+              <p>所有 REST 接口的请求响应格式说明</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+          <a class="doc-card" href="./docs/developer-guide.html">
+            <div class="doc-card__icon">🛠️</div>
+            <div>
+              <h3>开发者指南</h3>
+              <p>环境搭建、新增功能、代码规范、调试技巧</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+          <a class="doc-card" href="./docs/CHANGELOG.html">
+            <div class="doc-card__icon">📋</div>
+            <div>
+              <h3>变更记录</h3>
+              <p>版本历史、功能迭代与 Bug 修复记录</p>
+            </div>
+            <span class="doc-card__arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CTA BANNER ──────────────────────────────────── -->
+    <section class="cta-banner">
+      <div class="cta-banner__glow"></div>
+      <div class="container cta-banner__inner">
+        <h2>准备好告别手写测试脚本了吗？</h2>
+        <p>开源免费，5 分钟部署，立即体验 AI 驱动的 API 编排测试。</p>
+        <div class="cta-banner__btns">
+          <a class="btn btn--white btn--lg" href="#quickstart">立即开始</a>
+          <a class="btn btn--outline-white btn--lg" href="https://github.com" target="_blank" rel="noopener">查看源码</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FOOTER ──────────────────────────────────────── -->
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__brand">
+          <div class="footer__logo">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="36" height="36" rx="10" fill="#1b9a8e"/>
+              <path d="M9 18h4l3-7 4 14 3-9 2 2h4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>AIOrcTest</span>
+          </div>
+          <p>AI 驱动的 API 编排测试平台</p>
+        </div>
+
+        <div class="footer__links">
+          <div class="footer__col">
+            <h4>产品</h4>
+            <a href="#features">功能特性</a>
+            <a href="#howit">工作原理</a>
+            <a href="#quickstart">快速开始</a>
+          </div>
+          <div class="footer__col">
+            <h4>文档</h4>
+            <a href="./docs/architecture.html">系统架构</a>
+            <a href="./docs/user-guide.html">使用指南</a>
+            <a href="./docs/deployment.html">部署指南</a>
+            <a href="./docs/api-reference.html">API 参考</a>
+          </div>
+          <div class="footer__col">
+            <h4>开发者</h4>
+            <a href="./docs/developer-guide.html">开发者指南</a>
+            <a href="./docs/CHANGELOG.html">变更记录</a>
+            <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <div class="container">
+          <span>© 2026 AIOrcTest · MIT License</span>
+          <span>Built with FastAPI · React · LangChain</span>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
