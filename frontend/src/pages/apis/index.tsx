@@ -362,7 +362,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
         <DialogTitle sx={{ pb: 0 }}>
           Project Variables
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-            在 URL / Headers / Body 中用 {"{{var}}"} 引用 &nbsp;·&nbsp; 当前环境：{selectedEnvSlug.toUpperCase()}
+            Reference in URL / Headers / Body with {"{{var}}"} &nbsp;·&nbsp; Current env: {selectedEnvSlug.toUpperCase()}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
@@ -373,7 +373,7 @@ export function ApisPage({ projectId }: { projectId: string }) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowVarsPanel(false)}>关闭</Button>
+          <Button onClick={() => setShowVarsPanel(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
@@ -993,7 +993,7 @@ function EndpointEditor({
       {tab === 3 && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-            发送请求后自动提取响应中的值存入项目变量，可在 URL / Headers / Body 中用 {"{{var}}"} 引用。
+            Automatically extract values from the response after sending a request and store them as project variables. Reference them in URL / Headers / Body with {"{{var}}"}.
           </Typography>
           {extractRules.map((rule, idx) => (
             <Box
@@ -1003,7 +1003,7 @@ function EndpointEditor({
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                 <TextField
                   size="small"
-                  label="变量名"
+                  label="Variable name"
                   placeholder="e.g. token"
                   value={rule.var_name}
                   onChange={(e) => {
@@ -1040,7 +1040,7 @@ function EndpointEditor({
                   size="small"
                   fullWidth
                   label={rule.source === "body" ? "JSONPath" : "Header Name"}
-                  placeholder={rule.source === "body" ? "$.access_token  或  $.data[0].id" : "Authorization"}
+                  placeholder={rule.source === "body" ? "$.access_token  or  $.data[0].id" : "Authorization"}
                   value={rule.json_path}
                   onChange={(e) => {
                     const next = [...extractRules];
@@ -1351,11 +1351,11 @@ function AssertionsEditor({
   return (
     <Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-        对响应进行断言检查，发送请求后显示每条断言的通过/失败结果。
+        Add assertions to verify the response. Pass/fail results are shown after sending the request.
       </Typography>
       {varNames.length > 0 && (
         <Typography variant="caption" sx={{ display: "block", mb: 1.5, color: "#7c3aed", fontFamily: "monospace" }}>
-          可用变量: {varNames.map((k) => `{{${k}}}`).join("  ")}
+          Available vars: {varNames.map((k) => `{{${k}}}`).join("  ")}
         </Typography>
       )}
       {assertions.map((a, idx) => (
@@ -1402,7 +1402,7 @@ function AssertionsEditor({
           {a.type === "json_path" && (
             <Box sx={{ mb: 1 }}>
               <TextField
-                size="small" fullWidth label="JSONPath" placeholder="$.data.token  或  $.data.{{field}}"
+                size="small" fullWidth label="JSONPath" placeholder="$.data.token  or  $.data.{{field}}"
                 value={a.json_path}
                 onChange={(e) => update(idx, { json_path: e.target.value })}
                 inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -1425,11 +1425,11 @@ function AssertionsEditor({
             <Box>
               <TextField
                 size="small" fullWidth
-                label={a.type === "response_time" ? "Expected (ms)  支持 {{var}}" : "Expected Value  支持 {{var}}"}
+                label={a.type === "response_time" ? "Expected (ms)  supports {{var}}" : "Expected value  supports {{var}}"}
                 placeholder={
-                  a.type === "status_code" ? "200  或  {{expected_code}}"
-                  : a.type === "response_time" ? "2000  或  {{max_ms}}"
-                  : "expected value  或  {{token}}"
+                  a.type === "status_code" ? "200  or  {{expected_code}}"
+                  : a.type === "response_time" ? "2000  or  {{max_ms}}"
+                  : "expected value  or  {{token}}"
                 }
                 value={a.expected}
                 onChange={(e) => update(idx, { expected: e.target.value })}
@@ -1442,8 +1442,8 @@ function AssertionsEditor({
             <Box>
               <TextField
                 size="small" fullWidth
-                label="Expected Text / Regex  支持 {{var}}"
-                placeholder={a.operator === "matches" ? "^\\d+$  或  ^{{prefix}}" : "some text  或  {{keyword}}"}
+                label="Expected Text / Regex  supports {{var}}"
+                placeholder={a.operator === "matches" ? "^\\d+$  or  ^{{prefix}}" : "some text  or  {{keyword}}"}
                 value={a.expected}
                 onChange={(e) => update(idx, { expected: e.target.value })}
                 inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}

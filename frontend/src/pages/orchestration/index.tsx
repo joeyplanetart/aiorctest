@@ -68,7 +68,7 @@ const ENV_COLORS: Record<string, string> = {
   prod: "#dc2626",
 };
 
-/** 每次运行由后端注入，用于唯一邮箱等（与当前「运行环境」下的 Project Variables 一起进模板上下文） */
+/** Built-in vars injected per run (combined with Project Variables from the active environment) */
 const FLOW_CTX_BUILTIN_VARS = ["_run_ms", "_run_uuid"];
 import { getToken } from "@/providers/authProvider";
 
@@ -79,7 +79,7 @@ function headers(): Record<string, string> {
   };
 }
 
-/** 只提交 RF 需要的字段，并强制写入数字坐标（避免闭包/拖拽末帧未进 state 导致落库 0,0） */
+/** Submit only the fields RF needs, forcing numeric coordinates (avoids stale closure / drag end-frame saving 0,0) */
 function nodesForScenarioApi(nodes: Node<NodeData>[]) {
   return nodes.map((n) => ({
     id: n.id,
@@ -172,7 +172,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
     ]),
   );
 
-  /** 必须用函数式更新：拖拽时连续 position change 若基于闭包里的旧 nodes，会丢位置导致 Save 无效 */
+  /** Must use functional update: continuous position changes during drag with stale closure nodes would lose positions */
   const handleRfNodesChange = useCallback<OnNodesChange<Node<NodeData>>>(
     (changes) => {
       setNodes((nds) => applyNodeChanges(changes, nds));
@@ -197,7 +197,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
     [],
   );
 
-  /** 拖拽结束时用 RF 内部算好的坐标再写回 state，避免仅依赖 onNodesChange 时末帧丢失 */
+  /** On drag stop, write back RF's computed coordinates to state to avoid losing the last frame from onNodesChange */
   const handleNodeDragStop = useCallback(
     (_e: unknown, _node: Node<NodeData>, dragged: Node<NodeData>[]) => {
       if (!dragged?.length) return;
@@ -382,7 +382,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
       >
         <Stack direction="row" alignItems="center" sx={{ px: 1.5, py: 1, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 700 }}>Scenarios</Typography>
-          <Tooltip title="AI 编排">
+          <Tooltip title="AI Orchestration">
             <IconButton size="small" onClick={() => setShowAiDialog(true)} sx={{ color: "#7c3aed" }}>
               <AutoAwesomeIcon sx={{ fontSize: 18 }} />
             </IconButton>
@@ -464,7 +464,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
               {runEnvironments.length > 0 && (
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mr: 0.25 }}>
-                    环境
+                    Env
                   </Typography>
                   {runEnvironments.map((env) => {
                     const active = env.id === selectedRunEnvId;
@@ -475,7 +475,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
                         title={
                           env.base_url?.trim()
                             ? `Base URL: ${env.base_url.replace(/\/+$/, "")}`
-                            : "未配置 Base URL，相对路径请求将失败"
+                            : "No Base URL configured; relative path requests will fail"
                         }
                       >
                         <Chip
@@ -511,13 +511,13 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
                 {running ? "Running…" : "Run Flow"}
               </Button>
               {runEnvironments.length > 0 && (
-                <Tooltip title={runBaseUrlPreview ? `执行时相对路径会拼接：${runBaseUrlPreview}` : "请先在项目中为该环境配置 Base URL"}>
+                <Tooltip title={runBaseUrlPreview ? `Relative paths will be prefixed with: ${runBaseUrlPreview}` : "Please configure a Base URL for this environment in Project settings"}>
                   <Typography
                     variant="caption"
                     color={runBaseUrlPreview ? "text.secondary" : "warning.main"}
                     sx={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   >
-                    {runBaseUrlPreview || "无 Base URL"}
+                    {runBaseUrlPreview || "No Base URL"}
                   </Typography>
                 </Tooltip>
               )}
@@ -605,7 +605,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
                       )}
                       {((runResult.assertions_passed ?? 0) + (runResult.assertions_failed ?? 0)) > 0 && (
                         <Chip
-                          label={`断言 ${runResult.assertions_passed ?? 0}/${(runResult.assertions_passed ?? 0) + (runResult.assertions_failed ?? 0)}`}
+                          label={`Assertions ${runResult.assertions_passed ?? 0}/${(runResult.assertions_passed ?? 0) + (runResult.assertions_failed ?? 0)}`}
                           size="small"
                           color={(runResult.assertions_failed ?? 0) === 0 ? "success" : "error"}
                           variant="outlined"
@@ -668,7 +668,7 @@ export function OrchestrationPage({ projectId }: { projectId: string }) {
                     "&:hover": { bgcolor: "#6d28d9" },
                   }}
                 >
-                  AI 编排
+                  AI Orchestrate
                 </Button>
               </Stack>
             </Box>
@@ -759,7 +759,7 @@ function OverrideKVEditor({
           />
           <TextField
             size="small"
-            placeholder="Value  (支持 {{var}})"
+            placeholder="Value  (supports {{var}})"
             value={row.value}
             onChange={(e) => update(i, "value", e.target.value)}
             sx={{ flex: 1.5 }}
@@ -790,8 +790,8 @@ function OrcVarHint({ raw, varNames }: { raw: string; varNames: string[] }) {
   if (matched.length === 0 && unmatched.length === 0) return null;
   return (
     <Typography variant="caption" sx={{ display: "block", mt: 0.25, fontSize: 10, fontFamily: "monospace", color: matched.length > 0 && unmatched.length === 0 ? "#7c3aed" : "#d97706" }}>
-      {matched.length > 0 && `✓ 将替换: ${matched.map((k) => `{{${k}}}`).join(" ")}`}
-      {unmatched.length > 0 && ` ⚠ 未定义: ${unmatched.map((k) => `{{${k}}}`).join(" ")}`}
+      {matched.length > 0 && `✓ Will substitute: ${matched.map((k) => `{{${k}}}`).join(" ")}`}
+      {unmatched.length > 0 && ` ⚠ Undefined: ${unmatched.map((k) => `{{${k}}}`).join(" ")}`}
     </Typography>
   );
 }
@@ -859,7 +859,7 @@ function NodeConfigPanel({
       >
         <SettingsIcon sx={{ fontSize: 18, color: "primary.main" }} />
         <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: 14, flex: 1 }} noWrap>
-          {d.label || d.name || "步骤配置"}
+          {d.label || d.name || "Step configuration"}
         </Typography>
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />
@@ -871,8 +871,8 @@ function NodeConfigPanel({
         <TextField
           size="small"
           fullWidth
-          label="步骤名称"
-          placeholder={d.name || "给这个步骤起个易懂的名称…"}
+          label="Step name"
+          placeholder={d.name || "Give this step a descriptive name…"}
           value={d.label && d.label !== d.name ? d.label : ""}
           onChange={(e) => {
             const v = e.target.value.trim();
@@ -882,8 +882,8 @@ function NodeConfigPanel({
           inputProps={{ style: { fontSize: 13, fontWeight: 600 } }}
           helperText={
             d.name
-              ? `API 接口: ${d.name}${d.method ? ` [${d.method}]` : ""}`
-              : "点击节点后在此输入自定义步骤名称"
+              ? `API endpoint: ${d.name}${d.method ? ` [${d.method}]` : ""}`
+              : "Click a node to enter a custom step name"
           }
           FormHelperTextProps={{ style: { fontSize: 11, marginTop: 2, color: "#9ca3af" } }}
         />
@@ -912,10 +912,10 @@ function NodeConfigPanel({
         {tab === 0 && (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block", lineHeight: 1.45 }}>
-              留空则使用接口库里的原始值。URL / Headers / Query / Body 均支持 {"{{变量名}}"}：
-              当前运行环境里的 <strong>Project Variables</strong>、每次运行自动生成的 <strong>{"{{_run_uuid}}"} / {"{{_run_ms}}"}</strong>（推荐用来拼唯一邮箱），以及<strong>任意上游步骤 Extract</strong> 里定义的变量名。
+              Leave empty to use the original values from the API library. URL / Headers / Query / Body all support {"{{varName}}"}:
+              <strong>Project Variables</strong> from the current run environment, auto-generated <strong>{"{{_run_uuid}}"} / {"{{_run_ms}}"}</strong> per run (useful for unique emails), and variable names defined in upstream <strong>Extract</strong> rules.
               <br />
-              <strong>Body Type</strong> 默认 <strong>JSON</strong>。仅覆盖 Body 正文、未改类型时，运行按 JSON 发；完全不覆盖 Body 时仍用库里的正文与类型。要跟库完全一致请选「Use original」。
+              <strong>Body Type</strong> defaults to <strong>JSON</strong>. If you only override the body text without changing the type, it will be sent as JSON. If you don't override the body at all, the original body and type from the library will be used. Select "Use original" to keep everything as-is.
             </Typography>
 
             <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
@@ -954,7 +954,7 @@ function NodeConfigPanel({
               multiline
               minRows={3}
               maxRows={8}
-              placeholder={'例如 {"email":"user{{_run_uuid}}@test.com","password":"secret"}'}
+              placeholder={'e.g. {"email":"user{{_run_uuid}}@test.com","password":"secret"}'}
               value={overrides.body || ""}
               onChange={(e) => setOverrides({ body: e.target.value || null })}
               inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -986,7 +986,7 @@ function NodeConfigPanel({
             </Stack>
             {(overrides.body || "").trim() !== "" && overrides.body_type === null && (
               <Typography variant="caption" color="warning.main" sx={{ display: "block", mt: 0.75, lineHeight: 1.4 }}>
-                已选「Use original」：将使用接口库里的 Body 类型。若库中为 None 且你在上方填写了正文，请改为 <strong>JSON</strong>。
+                "Use original" selected: the body type from the API library will be used. If it's set to None and you've entered a body above, please switch to <strong>JSON</strong>.
               </Typography>
             )}
           </>
@@ -995,7 +995,7 @@ function NodeConfigPanel({
         {tab === 1 && (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
-              执行后用 JSONPath 从响应中提取值存入变量上下文，供下游步骤通过 {"{{var}}"} 引用。
+              After execution, extract values from the response using JSONPath and store them in the variable context for downstream steps to reference via {"{{var}}"}.
             </Typography>
 
             {extracts.map((rule, idx) => (
@@ -1006,7 +1006,7 @@ function NodeConfigPanel({
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   <TextField
                     size="small"
-                    label="变量名"
+                    label="Variable name"
                     placeholder="e.g. token"
                     value={rule.var_name}
                     onChange={(e) => updateExtract(idx, { var_name: e.target.value })}
@@ -1032,7 +1032,7 @@ function NodeConfigPanel({
                     size="small"
                     fullWidth
                     label={rule.source === "body" ? "JSONPath" : "Header Name"}
-                    placeholder={rule.source === "body" ? "$.access_token  或  $.data[0].id" : "Authorization"}
+                    placeholder={rule.source === "body" ? "$.access_token  or  $.data[0].id" : "Authorization"}
                     value={rule.json_path}
                     onChange={(e) => updateExtract(idx, { json_path: e.target.value })}
                     inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -1056,11 +1056,11 @@ function NodeConfigPanel({
         {tab === 2 && (
           <>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
-              对该步骤的响应添加断言，断言失败时该步骤计为失败。Expected 值支持 {"{{var}}"} 引用上游提取的变量。
+              Add assertions to this step's response. If any assertion fails, the step is marked as failed. Expected values support {"{{var}}"} to reference upstream extracted variables.
             </Typography>
             {knownVars.length > 0 && (
               <Typography variant="caption" sx={{ display: "block", mb: 1.5, color: "#7c3aed", fontFamily: "monospace", fontSize: 11 }}>
-                可用变量: {knownVars.map((k) => `{{${k}}}`).join("  ")}
+                Available vars: {knownVars.map((k) => `{{${k}}}`).join("  ")}
               </Typography>
             )}
             {assertions.map((a, idx) => (
@@ -1110,7 +1110,7 @@ function NodeConfigPanel({
                 {a.type === "json_path" && (
                   <Box sx={{ mb: 1 }}>
                     <TextField
-                      size="small" fullWidth label="JSONPath" placeholder="$.data.id  或  $.data.{{field}}"
+                      size="small" fullWidth label="JSONPath" placeholder="$.data.id  or  $.data.{{field}}"
                       value={a.json_path}
                       onChange={(e) => updateAssertion(idx, { json_path: e.target.value })}
                       inputProps={{ style: { fontSize: 12, fontFamily: "monospace" } }}
@@ -1133,11 +1133,11 @@ function NodeConfigPanel({
                   <Box>
                     <TextField
                       size="small" fullWidth
-                      label={a.type === "response_time" ? "Expected (ms)  支持 {{var}}" : "Expected  支持 {{var}}"}
+                      label={a.type === "response_time" ? "Expected (ms)  supports {{var}}" : "Expected  supports {{var}}"}
                       placeholder={
-                        a.type === "status_code" ? "200  或  {{expected_code}}"
-                        : a.type === "response_time" ? "2000  或  {{max_ms}}"
-                        : "value  或  {{upstream_var}}"
+                        a.type === "status_code" ? "200  or  {{expected_code}}"
+                        : a.type === "response_time" ? "2000  or  {{max_ms}}"
+                        : "value  or  {{upstream_var}}"
                       }
                       value={a.expected}
                       onChange={(e) => updateAssertion(idx, { expected: e.target.value })}
@@ -1426,9 +1426,9 @@ function FolderPickerNode({
 // ---- AI Orchestration dialog ----
 
 const AI_PROMPT_EXAMPLES = [
-  "测试用户注册 → 登录 → 获取个人信息的完整流程，注册使用唯一邮箱",
-  "验证创建项目、更新项目名称、然后删除项目的 CRUD 流程",
-  "测试未登录时访问受保护接口返回 401",
+  "Test full flow: user registration → login → get profile, using a unique email for signup",
+  "Verify the CRUD flow: create project, update project name, then delete project",
+  "Test that accessing a protected endpoint without login returns 401",
 ];
 
 function AiOrchestrationDialog({
@@ -1467,12 +1467,12 @@ function AiOrchestrationDialog({
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.detail || `生成失败 (HTTP ${res.status})`);
+        throw new Error(d.detail || `Generation failed (HTTP ${res.status})`);
       }
       const data = await res.json();
       onGenerated(data.id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "生成失败");
+      setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setGenerating(false);
     }
@@ -1482,12 +1482,12 @@ function AiOrchestrationDialog({
     <Dialog open={open} onClose={generating ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <AutoAwesomeIcon sx={{ color: "#7c3aed" }} />
-        AI 智能编排
+        AI Orchestration
       </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          用自然语言描述你的测试场景，AI 将自动从项目端点库中选择合适的接口，生成完整的测试流程（含参数覆盖、变量提取和断言）。
-          生成后你可以在画布上继续微调。
+          Describe your test scenario in natural language. The AI will automatically select appropriate endpoints from your project's API library and generate a complete test flow (including parameter overrides, variable extraction, and assertions).
+          You can fine-tune the result on the canvas after generation.
         </Typography>
         <TextField
           autoFocus
@@ -1495,7 +1495,7 @@ function AiOrchestrationDialog({
           multiline
           minRows={3}
           maxRows={8}
-          placeholder="例如：测试用户注册 → 登录 → 获取个人信息的完整流程"
+          placeholder="e.g. Test user registration → login → get profile flow"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={generating}
@@ -1533,14 +1533,14 @@ function AiOrchestrationDialog({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 2, p: 1.5, bgcolor: "#f5f3ff", borderRadius: 1 }}>
             <CircularProgress size={20} sx={{ color: "#7c3aed" }} />
             <Typography variant="body2" sx={{ color: "#7c3aed", fontWeight: 600 }}>
-              AI 正在分析端点并编排测试流程…
+              AI is analyzing endpoints and orchestrating the test flow…
             </Typography>
           </Box>
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} disabled={generating}>
-          取消
+          Cancel
         </Button>
         <Button
           variant="contained"
@@ -1554,7 +1554,7 @@ function AiOrchestrationDialog({
             fontWeight: 700,
           }}
         >
-          {generating ? "生成中…" : "生成场景"}
+          {generating ? "Generating…" : "Generate scenario"}
         </Button>
       </DialogActions>
     </Dialog>

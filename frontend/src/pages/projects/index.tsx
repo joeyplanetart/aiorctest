@@ -422,7 +422,7 @@ export function ProjectsPage() {
                       {isLast && (
                         <Chip
                           icon={<HistoryIcon sx={{ fontSize: "14px !important" }} />}
-                          label="上次进入"
+                          label="Last visited"
                           size="small"
                           color="info"
                           variant="outlined"
@@ -641,12 +641,12 @@ export function ProjectsPage() {
                 {canManageProject && (
                   <Box component="form" onSubmit={handleAddMember} sx={{ mt: 2 }}>
                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                      用户必须已注册。支持用 <strong>;</strong> 分隔同时添加多个 Email。
+                      Users must be registered. Separate multiple emails with <strong>;</strong>.
                     </Typography>
                     <Stack direction="column" spacing={1}>
                       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "flex-end" }}>
                         <TextField
-                          label="Email（多个用 ; 分隔）"
+                          label="Email (separate multiple with ;)"
                           value={memberEmail}
                           onChange={(e) => { setMemberEmail(e.target.value); setAddMemberResults([]); }}
                           required

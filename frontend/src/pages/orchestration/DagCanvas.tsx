@@ -27,7 +27,7 @@ const edgeStyle = { stroke: "#1b9a8e", strokeWidth: Math.max(1, Math.round(2 * N
 
 type AppNode = Node<NodeData>;
 
-/** 供父组件：新节点落在可视区域左上角附近，并在加载场景后手动 fitView */
+/** For parent component: place new nodes near top-left of viewport; manually fitView after loading a scenario */
 export type DagCanvasHandle = {
   getNewNodePosition: (stackIndex: number) => { x: number; y: number };
   fitView: () => ReturnType<ReactFlowInstance["fitView"]>;
@@ -88,15 +88,15 @@ const Canvas = forwardRef<DagCanvasHandle, CanvasProps>(function Canvas(
     <Box sx={{ py: 0.25, maxWidth: 300 }}>
       {nodes.length >= 2 && !hasEdges && (
         <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5, mb: 0.75 }}>
-          <strong>连线：</strong>从节点<strong>底部</strong>圆点拖到另一节点<strong>顶部</strong>圆点。
+          <strong>Connect:</strong> Drag from a node's <strong>bottom</strong> handle to another node's <strong>top</strong> handle.
         </Typography>
       )}
       <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5, mb: hasEdges ? 0.75 : 0 }}>
-        <strong>编辑节点：</strong>单击节点，右侧打开 Overrides / Extracts；改完后点工具栏「Save」。
+        <strong>Edit node:</strong> Click a node to open Overrides / Extracts on the right; click "Save" in the toolbar when done.
       </Typography>
       {hasEdges && (
         <Typography variant="caption" component="div" sx={{ display: "block", lineHeight: 1.5 }}>
-          <strong>取消连接：</strong>单击选中连线后按 Delete / Backspace，或<strong>双击</strong>连线删除。
+          <strong>Remove connection:</strong> Select an edge and press Delete / Backspace, or <strong>double-click</strong> the edge to remove it.
         </Typography>
       )}
     </Box>
@@ -125,7 +125,7 @@ const Canvas = forwardRef<DagCanvasHandle, CanvasProps>(function Canvas(
         >
           <IconButton
             size="small"
-            aria-label="画布操作说明"
+            aria-label="Canvas help"
             sx={{
               position: "absolute",
               top: 12,

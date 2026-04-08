@@ -46,7 +46,7 @@ const baseNavItems = [
   { to: "/projects", label: "Project management", icon: DashboardOutlinedIcon },
   { to: "/projects", label: "API management", icon: ApiOutlinedIcon, matchPrefix: "/apis" },
   { to: "/projects", label: "Orchestration", icon: AccountTreeOutlinedIcon, matchPrefix: "/orchestration" },
-  { to: "/llm-admin", label: "AI 模型管理", icon: AutoAwesomeOutlinedIcon },
+  { to: "/llm-admin", label: "LLM Management", icon: AutoAwesomeOutlinedIcon },
 ] as const;
 
 const adminNavItem = {
@@ -189,7 +189,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Box>
           )}
           {!collapsed && (
-            <Tooltip title="收起菜单" placement="right">
+            <Tooltip title="Collapse menu" placement="right">
               <IconButton size="small" onClick={toggleCollapsed} sx={{ ml: 1, flexShrink: 0 }}>
                 <MenuOpenIcon fontSize="small" />
               </IconButton>
@@ -200,7 +200,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Expand button when collapsed */}
         {collapsed && (
           <Box sx={{ display: "flex", justifyContent: "center", pb: 1 }}>
-            <Tooltip title="展开菜单" placement="right">
+            <Tooltip title="Expand menu" placement="right">
               <IconButton size="small" onClick={toggleCollapsed}>
                 <MenuIcon fontSize="small" />
               </IconButton>
@@ -212,7 +212,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {!collapsed && (
           <>
             <Box sx={{ px: 2, pb: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Tooltip title="编辑个人信息" placement="right">
+              <Tooltip title="Edit profile" placement="right">
                 <Avatar
                   src={identity?.avatar_url || undefined}
                   onClick={() => setProfileOpen(true)}
@@ -257,7 +257,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {collapsed && (
           <>
             <Box sx={{ display: "flex", justifyContent: "center", pb: 1.5 }}>
-              <Tooltip title={`${display} — 点击编辑个人信息`} placement="right">
+              <Tooltip title={`${display} — Edit profile`} placement="right">
                 <Avatar
                   src={identity?.avatar_url || undefined}
                   onClick={() => setProfileOpen(true)}
@@ -458,11 +458,11 @@ function ProfileDialog({
       body: JSON.stringify({ display_name: displayName, avatar_url: avatarUrl || null }),
     });
     if (res.ok) {
-      setMsg("个人信息已更新");
+      setMsg("Profile updated");
       refetch();
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "更新失败");
+      setError(d.detail || "Update failed");
     }
   };
 
@@ -476,12 +476,12 @@ function ProfileDialog({
       body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
     });
     if (res.ok || res.status === 204) {
-      setMsg("密码已修改");
+      setMsg("Password changed");
       setOldPassword("");
       setNewPassword("");
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.detail || "密码修改失败");
+      setError(d.detail || "Password change failed");
     }
   };
 
@@ -514,7 +514,7 @@ function ProfileDialog({
         <Card variant="outlined" sx={{ mb: 2 }}>
           <CardContent component="form" onSubmit={handleProfileSave} sx={{ pb: "16px !important" }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              个人信息
+              Profile
             </Typography>
             <Stack spacing={1.5}>
               <TextField
@@ -525,14 +525,14 @@ function ProfileDialog({
                 size="small"
               />
               <TextField
-                label="显示名称"
+                label="Display Name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 fullWidth
                 size="small"
               />
               <TextField
-                label="头像 URL"
+                label="Avatar URL"
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
                 fullWidth
@@ -540,7 +540,7 @@ function ProfileDialog({
                 placeholder="https://…"
               />
               <Button type="submit" variant="contained" size="small" sx={{ alignSelf: "flex-start" }}>
-                保存修改
+                Save changes
               </Button>
             </Stack>
           </CardContent>
@@ -549,11 +549,11 @@ function ProfileDialog({
         <Card variant="outlined">
           <CardContent component="form" onSubmit={handlePasswordChange} sx={{ pb: "16px !important" }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              修改密码
+              Change password
             </Typography>
             <Stack spacing={1.5}>
               <TextField
-                label="当前密码"
+                label="Current password"
                 type="password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
@@ -562,7 +562,7 @@ function ProfileDialog({
                 size="small"
               />
               <TextField
-                label="新密码"
+                label="New password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -572,7 +572,7 @@ function ProfileDialog({
                 inputProps={{ minLength: 6 }}
               />
               <Button type="submit" variant="contained" color="secondary" size="small" sx={{ alignSelf: "flex-start" }}>
-                更新密码
+                Update password
               </Button>
             </Stack>
           </CardContent>

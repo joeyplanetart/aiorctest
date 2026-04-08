@@ -24,7 +24,6 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
@@ -106,6 +105,10 @@ function formatTokens(n: number) {
   return String(n);
 }
 
+function daysLabel(d: number) {
+  return d >= 365 ? "1 year" : `${d} days`;
+}
+
 export function LlmAdminPage() {
   const [config, setConfig] = useState<LlmConfig | null>(null);
   const [selectedModel, setSelectedModel] = useState("");
@@ -168,7 +171,7 @@ export function LlmAdminPage() {
 
   const handleSaveConfig = async () => {
     const modelName = selectedModel === "custom" ? customModel.trim() : selectedModel;
-    if (!modelName) { setError("请选择或输入模型名称"); return; }
+    if (!modelName) { setError("Please select or enter a model name"); return; }
     setConfigSaving(true);
     setConfigMsg("");
     setError("");
@@ -181,12 +184,12 @@ export function LlmAdminPage() {
       if (res.ok) {
         const data: LlmConfig = await res.json();
         setConfig(data);
-        setConfigMsg("模型配置已更新");
+        setConfigMsg("Model configuration saved");
       } else {
         const d = await res.json().catch(() => ({}));
-        setError(d.detail || "保存失败");
+        setError(d.detail || "Save failed");
       }
-    } catch { setError("网络错误"); }
+    } catch { setError("Network error"); }
     setConfigSaving(false);
   };
 
@@ -195,9 +198,9 @@ export function LlmAdminPage() {
       {/* Header */}
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Box>
-          <Typography variant="h4">AI 模型管理</Typography>
+          <Typography variant="h4">LLM Management</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }}>
-            管理 AI 编排使用的大语言模型配置，查看每次调用的 Token 消耗记录和趋势图表。
+            Configure the LLM model used by AI orchestration, and review token consumption records and trend charts.
           </Typography>
         </Box>
       </Stack>
@@ -209,33 +212,33 @@ export function LlmAdminPage() {
         <Card sx={{ flex: 1, bgcolor: (t) => alpha(t.palette.primary.main, 0.1), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              当前模型
+              Active model
             </Typography>
             <Typography variant="h3" fontWeight={800} color="primary.dark" noWrap>
               {config?.model_name ?? "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Active LLM model
+              Current LLM model
             </Typography>
           </CardContent>
         </Card>
         <Card sx={{ flex: 1, bgcolor: (t) => alpha("#e8a87c", 0.25), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              总调用次数
+              Total calls
             </Typography>
             <Typography variant="h3" fontWeight={800} sx={{ color: "#b45309" }}>
               {summary?.total_calls ?? "—"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              近 {statsDays} 天
+              Last {daysLabel(statsDays)}
             </Typography>
           </CardContent>
         </Card>
         <Card sx={{ flex: 1, bgcolor: (t) => alpha(t.palette.success.main, 0.08), border: "none" }}>
           <CardContent>
             <Typography variant="body2" color="text.secondary" fontWeight={600}>
-              Token 消耗
+              Token usage
             </Typography>
             <Typography variant="h3" fontWeight={800} color="success.dark">
               {summary ? formatTokens(summary.total_tokens) : "—"}
@@ -255,7 +258,7 @@ export function LlmAdminPage() {
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <SmartToyOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700}>
-                模型配置
+                Model configuration
               </Typography>
             </Stack>
 
@@ -263,16 +266,16 @@ export function LlmAdminPage() {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                 <CheckCircleIcon sx={{ color: "success.main", fontSize: 16 }} />
                 <Typography variant="caption" fontWeight={600}>
-                  当前: <Chip label={config.model_name} size="small" sx={{ fontWeight: 700, ml: 0.5, height: 22, fontSize: 11 }} />
+                  Active: <Chip label={config.model_name} size="small" sx={{ fontWeight: 700, ml: 0.5, height: 22, fontSize: 11 }} />
                 </Typography>
               </Stack>
             )}
 
             <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-              <InputLabel>选择模型</InputLabel>
+              <InputLabel>Select model</InputLabel>
               <Select
                 value={selectedModel}
-                label="选择模型"
+                label="Select model"
                 onChange={(e) => {
                   setSelectedModel(e.target.value);
                   if (e.target.value !== "custom") setCustomModel("");
@@ -282,7 +285,7 @@ export function LlmAdminPage() {
                   <MenuItem key={m} value={m}>{m}</MenuItem>
                 ))}
                 <Divider />
-                <MenuItem value="custom">自定义模型...</MenuItem>
+                <MenuItem value="custom">Custom model...</MenuItem>
               </Select>
             </FormControl>
 
@@ -290,7 +293,7 @@ export function LlmAdminPage() {
               <TextField
                 fullWidth
                 size="small"
-                label="模型名称"
+                label="Model name"
                 placeholder="e.g. openai/gpt-4o-mini"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
@@ -306,7 +309,7 @@ export function LlmAdminPage() {
               onClick={handleSaveConfig}
               disabled={configSaving}
             >
-              {configSaving ? "保存中…" : "保存配置"}
+              {configSaving ? "Saving…" : "Save configuration"}
             </Button>
 
             {configMsg && <Alert severity="success" sx={{ mt: 2 }}>{configMsg}</Alert>}
@@ -314,8 +317,8 @@ export function LlmAdminPage() {
             <Divider sx={{ my: 2.5 }} />
 
             <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.6 }}>
-              API Base URL 和 API Key 通过后端环境变量 <strong>OPENAI_API_BASE</strong> 和 <strong>OPENAI_API_KEY</strong> 配置。
-              支持 OpenAI、OpenRouter 等兼容接口。
+              API Base URL and API Key are configured via backend environment variables <strong>OPENAI_API_BASE</strong> and <strong>OPENAI_API_KEY</strong>.
+              Supports OpenAI, OpenRouter, and other compatible APIs.
             </Typography>
           </CardContent>
         </Card>
@@ -327,7 +330,7 @@ export function LlmAdminPage() {
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
               <BarChartOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-                消耗趋势
+                Usage trends
               </Typography>
               <FormControl size="small" sx={{ minWidth: 100 }}>
                 <Select
@@ -336,10 +339,10 @@ export function LlmAdminPage() {
                   size="small"
                   sx={{ fontSize: 12 }}
                 >
-                  <MenuItem value={7} sx={{ fontSize: 12 }}>近 7 天</MenuItem>
-                  <MenuItem value={14} sx={{ fontSize: 12 }}>近 14 天</MenuItem>
-                  <MenuItem value={30} sx={{ fontSize: 12 }}>近 30 天</MenuItem>
-                  <MenuItem value={90} sx={{ fontSize: 12 }}>近 90 天</MenuItem>
+                  <MenuItem value={7} sx={{ fontSize: 12 }}>Last 7 days</MenuItem>
+                  <MenuItem value={14} sx={{ fontSize: 12 }}>Last 14 days</MenuItem>
+                  <MenuItem value={30} sx={{ fontSize: 12 }}>Last 30 days</MenuItem>
+                  <MenuItem value={90} sx={{ fontSize: 12 }}>Last 90 days</MenuItem>
                 </Select>
               </FormControl>
               {statsLoading && <CircularProgress size={16} />}
@@ -349,7 +352,7 @@ export function LlmAdminPage() {
               <>
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block" }}>
-                    Token 消耗
+                    Token consumption
                   </Typography>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={stats} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -361,7 +364,7 @@ export function LlmAdminPage() {
                           value.toLocaleString(),
                           name === "prompt_tokens" ? "Prompt" : "Completion",
                         ]}
-                        labelFormatter={(label: string) => `日期: ${label}`}
+                        labelFormatter={(label: string) => `Date: ${label}`}
                       />
                       <Legend formatter={(v: string) => (v === "prompt_tokens" ? "Prompt" : "Completion")} />
                       <Bar dataKey="prompt_tokens" stackId="a" fill="#1976d2" />
@@ -372,7 +375,7 @@ export function LlmAdminPage() {
 
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ mb: 1, display: "block" }}>
-                    调用次数
+                    Call count
                   </Typography>
                   <ResponsiveContainer width="100%" height={160}>
                     <AreaChart data={stats} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -380,8 +383,8 @@ export function LlmAdminPage() {
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                       <RechartsTooltip
-                        formatter={(value: number) => [value, "调用次数"]}
-                        labelFormatter={(label: string) => `日期: ${label}`}
+                        formatter={(value: number) => [value, "Calls"]}
+                        labelFormatter={(label: string) => `Date: ${label}`}
                       />
                       <Area type="monotone" dataKey="count" stroke="#1976d2" fill="#bbdefb" strokeWidth={2} />
                     </AreaChart>
@@ -391,7 +394,7 @@ export function LlmAdminPage() {
             ) : (
               !statsLoading && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
-                  暂无消耗数据，使用 AI 编排后将在此显示趋势图表
+                  No usage data yet. Trend charts will appear after using AI orchestration.
                 </Typography>
               )
             )}
@@ -402,7 +405,7 @@ export function LlmAdminPage() {
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <ListAltOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
-                消耗记录
+                Usage records
               </Typography>
               <FormControl size="small" sx={{ minWidth: 100 }}>
                 <Select
@@ -411,10 +414,10 @@ export function LlmAdminPage() {
                   size="small"
                   sx={{ fontSize: 12 }}
                 >
-                  <MenuItem value={7} sx={{ fontSize: 12 }}>近 7 天</MenuItem>
-                  <MenuItem value={30} sx={{ fontSize: 12 }}>近 30 天</MenuItem>
-                  <MenuItem value={90} sx={{ fontSize: 12 }}>近 90 天</MenuItem>
-                  <MenuItem value={365} sx={{ fontSize: 12 }}>近 1 年</MenuItem>
+                  <MenuItem value={7} sx={{ fontSize: 12 }}>Last 7 days</MenuItem>
+                  <MenuItem value={30} sx={{ fontSize: 12 }}>Last 30 days</MenuItem>
+                  <MenuItem value={90} sx={{ fontSize: 12 }}>Last 90 days</MenuItem>
+                  <MenuItem value={365} sx={{ fontSize: 12 }}>Last year</MenuItem>
                 </Select>
               </FormControl>
               <Button
@@ -426,7 +429,7 @@ export function LlmAdminPage() {
                 startIcon={recordsLoading ? <CircularProgress size={14} /> : <RefreshOutlinedIcon sx={{ fontSize: 16 }} />}
                 sx={{ textTransform: "none", fontSize: 12, minWidth: 0, px: 1.5 }}
               >
-                刷新
+                Refresh
               </Button>
             </Stack>
 
@@ -435,22 +438,22 @@ export function LlmAdminPage() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>时间</TableCell>
-                      <TableCell>模型</TableCell>
-                      <TableCell>用户</TableCell>
-                      <TableCell>项目</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Model</TableCell>
+                      <TableCell>User</TableCell>
+                      <TableCell>Project</TableCell>
                       <TableCell align="right">Prompt</TableCell>
                       <TableCell align="right">Completion</TableCell>
                       <TableCell align="right">Total</TableCell>
-                      <TableCell>摘要</TableCell>
+                      <TableCell>Summary</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {records.map((r) => (
                       <TableRow key={r.id} hover>
                         <TableCell sx={{ whiteSpace: "nowrap", fontSize: 12 }}>
-                          {new Date(r.created_at).toLocaleString("zh-CN", {
-                            month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+                          {new Date(r.created_at).toLocaleString("en-US", {
+                            month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit",
                           })}
                         </TableCell>
                         <TableCell>
@@ -490,7 +493,7 @@ export function LlmAdminPage() {
             ) : (
               !recordsLoading && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
-                  暂无消耗记录，使用 AI 编排功能后将在此显示
+                  No usage records yet. Records will appear after using AI orchestration.
                 </Typography>
               )
             )}
