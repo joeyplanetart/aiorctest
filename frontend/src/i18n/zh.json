@@ -90,8 +90,8 @@
   "layout": {
     "navProjects": "项目管理",
     "navApis": "API 管理",
-    "navOrch": "编排",
-    "navLlm": "大模型管理",
+    "navOrch": "API 编排",
+    "navLlm": "模型管理",
     "navAdmin": "平台管理",
     "collapseMenu": "收起菜单",
     "expandMenu": "展开菜单",
