@@ -552,7 +552,7 @@ async def ai_generate_scenario(
     from app.services.ai_orchestration import ai_generate_scenario as _ai_gen
 
     try:
-        result = await _ai_gen(db, project_id, body.prompt)
+        result = await _ai_gen(db, project_id, body.prompt, user_id=current_user.id)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 

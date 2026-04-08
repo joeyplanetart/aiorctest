@@ -7,6 +7,7 @@ from app.api.routes_admin import router as admin_router
 from app.api.routes_api import router as api_router
 from app.api.routes_auth import router as auth_router
 from app.api.routes_dag import router as dag_router
+from app.api.routes_llm import router as llm_router
 from app.api.routes_project import router as project_router
 from app.api.routes_rag import router as rag_router
 from app.bootstrap import bootstrap_superadmin_emails
@@ -36,6 +37,7 @@ app.include_router(project_router, prefix="/projects", tags=["Projects"])
 app.include_router(api_router, prefix="/projects", tags=["API Endpoints"])
 app.include_router(rag_router, prefix="/rag", tags=["RAG"])
 app.include_router(dag_router, prefix="/projects", tags=["Scenarios"])
+app.include_router(llm_router, prefix="/llm", tags=["LLM"])
 
 
 @app.get("/health")

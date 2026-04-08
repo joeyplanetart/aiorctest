@@ -178,3 +178,28 @@ class Scenario(Base):
     edges_json = Column(Text, nullable=False, default="[]")
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class LlmConfig(Base):
+    """Singleton-style table: only one row (id='default')."""
+    __tablename__ = "llm_config"
+
+    id = Column(String(32), primary_key=True, default="default")
+    model_name = Column(String(200), nullable=False, default="gpt-4o-mini")
+    api_base = Column(Text, nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class LlmUsageRecord(Base):
+    __tablename__ = "llm_usage_records"
+
+    id = Column(String(32), primary_key=True, default=_uuid)
+    user_id = Column(String(32), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    project_id = Column(String(32), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
+    model = Column(String(200), nullable=False)
+    feature = Column(String(100), nullable=False, default="ai_orchestration")
+    prompt_tokens = Column(Integer, nullable=False, default=0)
+    completion_tokens = Column(Integer, nullable=False, default=0)
+    total_tokens = Column(Integer, nullable=False, default=0)
+    prompt_summary = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)

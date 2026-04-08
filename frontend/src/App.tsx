@@ -10,6 +10,7 @@ import { ProjectsPage } from "./pages/projects";
 import { OrchestrationPageWrapper } from "./pages/orchestration/Wrapper";
 import { AdminPage } from "./pages/admin";
 import { ApisPageWrapper } from "./pages/apis/Wrapper";
+import { LlmAdminPage } from "./pages/llm-admin";
 import { AppLayout } from "./components/Layout";
 
 const API_URL = "/api";
@@ -25,6 +26,7 @@ export default function App() {
           { name: "project-management", list: "/projects" },
           { name: "apis", list: "/projects/:projectId/apis" },
           { name: "orchestration", list: "/projects/:projectId/orchestration" },
+          { name: "llm-admin", list: "/llm-admin" },
         ]}
       >
         <Routes>
@@ -45,6 +47,7 @@ export default function App() {
             <Route path="/projects/:projectId/apis" element={<ApisPageWrapper />} />
             <Route path="/projects/:projectId/orchestration" element={<OrchestrationPageWrapper />} />
             <Route path="/orchestration" element={<Navigate to="/projects" replace />} />
+            <Route path="/llm-admin" element={<LlmAdminPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>

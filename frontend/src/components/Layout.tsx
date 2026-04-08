@@ -27,6 +27,7 @@ import { alpha } from "@mui/material/styles";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import ApiOutlinedIcon from "@mui/icons-material/ApiOutlined";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
@@ -45,6 +46,7 @@ const baseNavItems = [
   { to: "/projects", label: "Project management", icon: DashboardOutlinedIcon },
   { to: "/projects", label: "API management", icon: ApiOutlinedIcon, matchPrefix: "/apis" },
   { to: "/projects", label: "Orchestration", icon: AccountTreeOutlinedIcon, matchPrefix: "/orchestration" },
+  { to: "/llm-admin", label: "AI 模型管理", icon: AutoAwesomeOutlinedIcon },
 ] as const;
 
 const adminNavItem = {

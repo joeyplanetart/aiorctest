@@ -16,7 +16,7 @@ from typing import Any
 import httpx
 from sqlalchemy.orm import Session
 
-from app.db.models import ApiEndpoint, ApiFolder
+from app.db.models import ApiEndpoint, ApiFolder, LlmConfig, LlmUsageRecord
 from app.rag.config import LLM_MODEL, OPENAI_API_KEY
 
 _OPENAI_BASE: str | None = None
@@ -271,10 +271,19 @@ def _steps_to_nodes_edges(
     return nodes, edges
 
 
+def _get_active_model(db: Session) -> str:
+    """Read model name from DB config, falling back to env/default."""
+    cfg = db.query(LlmConfig).filter(LlmConfig.id == "default").first()
+    if cfg and cfg.model_name:
+        return cfg.model_name
+    return LLM_MODEL
+
+
 async def ai_generate_scenario(
     db: Session,
     project_id: str,
     prompt: str,
+    user_id: str | None = None,
 ) -> dict[str, Any]:
     """Call LLM to generate a scenario from natural language.
 
@@ -297,11 +306,12 @@ async def ai_generate_scenario(
         endpoint_catalog=catalog,
     )
 
+    model = _get_active_model(db)
     base = _get_openai_base()
     url = f"{base}/chat/completions"
 
     payload = {
-        "model": LLM_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt},
@@ -330,6 +340,24 @@ async def ai_generate_scenario(
 
     result = resp.json()
     content = result["choices"][0]["message"]["content"]
+
+    usage = result.get("usage", {})
+    prompt_tokens = usage.get("prompt_tokens", 0)
+    completion_tokens = usage.get("completion_tokens", 0)
+    total_tokens = usage.get("total_tokens", 0)
+
+    record = LlmUsageRecord(
+        user_id=user_id,
+        project_id=project_id,
+        model=model,
+        feature="ai_orchestration",
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+        prompt_summary=prompt[:200],
+    )
+    db.add(record)
+    db.commit()
 
     try:
         parsed = _parse_llm_json(content)
